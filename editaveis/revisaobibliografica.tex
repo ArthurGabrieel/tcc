@@ -38,10 +38,9 @@ Existem duas estratégias principais de métodos de conjunto:
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{figuras/baggingxboosting.jpg}
-  \caption[Diferença estrutural entre \textit{Bagging} e \textit{Boosting}]{Diferença estrutural entre as duas estratégias de \textit{ensemble}. À esquerda, no \textit{Bagging}, a base original (tabela verde) é reamostrada em vários subconjuntos, e cada um treina um modelo de forma paralela e independente; as predições são combinadas por média ou voto (lâmpada). À direita, no \textit{Boosting}, os modelos são treinados em sequência: cada um recebe os dados reponderados conforme os erros do anterior (tabelas de cores diferentes) e as predições são somadas. O XGBoost, usado no Rating da SEFAZ-DF, pertence à segunda família.}
+  \caption[Diferença estrutural entre \textit{Bagging} e \textit{Boosting}]{Diferença estrutural entre as duas estratégias de \textit{ensemble}. À esquerda, no \textit{Bagging}, a base original (tabela verde) é reamostrada em vários subconjuntos, e cada um treina um modelo de forma paralela e independente; as predições são combinadas por média ou voto (lâmpada). À direita, no \textit{Boosting}, os modelos são treinados em sequência: cada um recebe os dados reponderados conforme os erros do anterior (tabelas de cores diferentes) e as predições são somadas. O XGBoost, usado no Rating da SEFAZ-DF, pertence à segunda família, com base em \citeonline{hastieElementsStatisticalLearning2009}.}
   \label{fig:ensemble_comparison}
 
-  \small{Fonte: Elaborado pelos autores com base em \citeonline{hastieElementsStatisticalLearning2009}.}
 \end{figure}
 
 \subsection{\textit{Gradient Boosting Decision Trees}}
@@ -109,20 +108,21 @@ Apesar de sua transparência intrínseca, a Regressão Logística apresenta limi
 
 \begin{table}[H]
 \centering
-\caption[Vantagens e desvantagens da Regressão Logística]{Vantagens (coluna da esquerda) e desvantagens (coluna da direita) da Regressão Logística quando aplicada à classificação de créditos tributários. Cada linha opõe um ponto forte a uma limitação relacionada: a interpretabilidade direta tem como contrapartida a suposição de relações lineares, o que explica por que a SEFAZ-DF optou por um modelo não linear.}
+\caption[Vantagens e desvantagens da Regressão Logística]{Vantagens (coluna da esquerda) e desvantagens (coluna da direita) da Regressão Logística quando aplicada à classificação de créditos tributários. Cada linha opõe um ponto forte a uma limitação relacionada: a interpretabilidade direta tem como contrapartida a suposição de relações lineares, o que explica por que a SEFAZ-DF optou por um modelo não linear, com base em \citeonline{hastieElementsStatisticalLearning2009} e \citeonline{changCreditRiskPrediction2024}.}
 \label{tab:vantagens_lr}
-\begin{tabular}{|p{0.45\linewidth}|p{0.45\linewidth}|}
-\hline
-\textbf{Vantagens} & \textbf{Desvantagens} \\
-\hline
-\textbf{Interpretabilidade Direta:} Os pesos (coeficientes) indicam a direção e magnitude do impacto de cada variável. & \textbf{Linearidade Restritiva:} Assume que as relações são lineares. Falha em capturar padrões complexos (ex: a dívida só é risco se associada a um setor específico). \\
-\hline
-\textbf{Baixo Custo Computacional:} Treinamento rápido e eficiente. & \textbf{Alto Viés (\textit{Underfitting}):} Tende a simplificar excessivamente a realidade fiscal, ignorando nuances do comportamento do contribuinte. \\
-\hline
-\textbf{Probabilística:} Retorna naturalmente uma probabilidade bem calibrada. & \textbf{Sensibilidade a \textit{Outliers}:} Valores extremos podem distorcer significativamente os coeficientes globais. \\
-\hline
-\end{tabular}
-\small{\\Fonte: Elaborado pelos autores com base em \cite{hastieElementsStatisticalLearning2009} e \cite{changCreditRiskPrediction2024}.}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{LL}
+        \toprule
+        \textbf{Vantagens} & \textbf{Desvantagens} \\
+        \midrule
+        \textbf{Interpretabilidade direta:} os pesos (coeficientes) indicam a direção e a magnitude do impacto de cada variável. & \textbf{Linearidade restritiva:} assume que as relações são lineares e falha em capturar padrões complexos (ex.: a dívida só é risco se associada a um setor específico). \\
+        \addlinespace
+        \textbf{Baixo custo computacional:} treinamento rápido e eficiente. & \textbf{Alto viés (\textit{underfitting}):} tende a simplificar excessivamente a realidade fiscal, ignorando nuances do comportamento do contribuinte. \\
+        \addlinespace
+        \textbf{Probabilística:} retorna naturalmente uma probabilidade bem calibrada. & \textbf{Sensibilidade a \textit{outliers}:} valores extremos podem distorcer significativamente os coeficientes globais. \\
+        \bottomrule
+    \end{tabularx}
 \end{table}
 
 A inadequação da Regressão Logística para a SEFAZ-DF reside na \textbf{incapacidade de modelar interações não-lineares}. Dados fiscais são inerentemente complexos: o impacto do ``Tempo de Atraso'' na probabilidade de pagamento não é linear e depende de outras variáveis (como o ``Tipo de Imposto'' ou ``Porte da Empresa''). 
@@ -417,26 +417,24 @@ A Tabela \ref{tab:shap_vs_lime} consolida as diferenças fundamentais entre as d
 
 \begin{table}[H]
     \centering
-    \caption[Comparação técnica entre LIME e SHAP]{Comparação técnica entre LIME e SHAP segundo oito critérios relevantes para a auditoria fiscal. Cada linha contrapõe as duas técnicas em um critério: fundamento teórico, garantias formais, consistência, custo computacional, reprodutibilidade, forma de interpretação, segurança jurídica e papel sugerido no contexto da SEFAZ-DF. Em síntese, o LIME é mais simples e rápido, porém estocástico; o SHAP é determinístico e tem garantias axiomáticas, sendo mais adequado à justificativa formal de um \textit{rating}.}
+    \caption[Comparação técnica entre LIME e SHAP]{Comparação técnica entre LIME e SHAP segundo oito critérios relevantes para a auditoria fiscal. Cada linha contrapõe as duas técnicas em um critério: fundamento teórico, garantias formais, consistência, custo computacional, reprodutibilidade, forma de interpretação, segurança jurídica e papel sugerido no contexto da SEFAZ-DF. Em síntese, o LIME é mais simples e rápido, porém estocástico; o SHAP é determinístico e tem garantias axiomáticas, sendo mais adequado à justificativa formal de um \textit{rating}, com base em \citeonline{molnarInterpretableMachineLearning} e \citeonline{lundbergUnifiedApproachInterpreting2017}.}
     \label{tab:shap_vs_lime}
     \small
-    \renewcommand{\arraystretch}{1.3} % Aumenta o espaçamento entre linhas para melhor leitura
-    \begin{tabular}{p{3.5cm} p{5.0cm} p{5.0cm}}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.4cm}LL}
         \toprule
         \textbf{Critério} & \textbf{LIME} & \textbf{SHAP} \\
         \midrule
-        \textbf{Fundamentação} & Aproximação linear local via perturbação & Teoria dos Jogos Cooperativos (Valores de Shapley) \\
-        \textbf{Garantias Axiomáticas} & Nenhuma garantia formal & Eficiência, Simetria, Dummy e Aditividade \\
-        \textbf{Consistência} & Baixa (sensível a amostragem e parâmetros do kernel) & Alta (única solução que satisfaz os axiomas de justiça) \\
-        \textbf{Complexidade} & Baixa a Média ($O(N \cdot M)$) & Alta (exata) / Otimizada ($O(TLD^2)$ via TreeSHAP) \\
-        \textbf{Reprodutibilidade} & Estocástica (pode variar entre execuções) & Determinística (mesmo resultado sempre) \\
-        \textbf{Interpretação} & Pesos de um modelo linear local & Contribuição marginal para o desvio da média \\
-        \textbf{Segurança Jurídica} & Questionável (instabilidade) & Robusta (consistência matemática auditável) \\
-        \textbf{Uso na SEFAZ-DF} & Diagnóstico exploratório rápido & Justificativa formal de \textit{ratings} \\
+        Fundamentação & Aproximação linear local via perturbação & Teoria dos Jogos Cooperativos (valores de Shapley) \\
+        Garantias axiomáticas & Nenhuma garantia formal & Eficiência, simetria, nulidade e aditividade \\
+        Consistência & Baixa (sensível à amostragem e aos parâmetros do \textit{kernel}) & Alta (única solução que satisfaz os axiomas) \\
+        Complexidade & Baixa a média ($O(N \cdot M)$) & Alta (exata) ou otimizada ($O(TLD^2)$ via TreeSHAP) \\
+        Reprodutibilidade & Estocástica (pode variar entre execuções) & Determinística (mesmo resultado sempre) \\
+        Interpretação & Pesos de um modelo linear local & Contribuição marginal para o desvio da média \\
+        Segurança jurídica & Questionável (instabilidade) & Robusta (consistência matemática auditável) \\
+        Uso na SEFAZ-DF & Diagnóstico exploratório rápido & Justificativa formal de \textit{ratings} \\
         \bottomrule
-    \end{tabular}
-    \vspace{0.2cm}
-    \footnotesize{\\ \textbf{Fonte:} Elaborado pelos autores com base em \citeonline{molnarInterpretableMachineLearning} e \citeonline{lundbergUnifiedApproachInterpreting2017}.}
+    \end{tabularx}
 \end{table}
 
 A análise comparativa evidencia que, para o contexto específico da SEFAZ-DF, o \textbf{SHAP apresenta vantagens relevantes}. A consistência determinística e as garantias axiomáticas são requisitos fundamentais quando as explicações geradas pelo modelo podem ser objeto de contestação administrativa ou judicial. Um contribuinte que questione seu \textit{rating} tem direito a uma explicação reproduzível e matematicamente fundamentada, e o SHAP oferece atributos compatíveis com essa exigência.

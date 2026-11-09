@@ -35,7 +35,8 @@ A classificação de uma CDA segue quatro passos, todos reproduzidos fielmente:
     \caption[Faixas de probabilidade que definem cada classe de \textit{rating}]{Faixas de probabilidade normalizada de pagamento que definem cada classe do Rating da Dívida Ativa da SEFAZ-DF. A probabilidade é a média das saídas dos três modelos XGBoost do \textit{setup}, reescalada pela normalização \textit{min-max}. O limite inferior de cada faixa é inclusivo. A classe A também é atribuída, sem consulta ao modelo, às CDAs parceladas ou suspensas.}
     \label{tab:faixas_rating}
     \small
-    \begin{tabular}{ccl}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{2.2cm}CL}
         \toprule
         \textbf{\textit{Rating}} & \textbf{Probabilidade normalizada} & \textbf{Interpretação} \\
         \midrule
@@ -44,21 +45,28 @@ A classificação de uma CDA segue quatro passos, todos reproduzidos fielmente:
         C & $0{,}03 \le \tilde{p} < 0{,}25$ & Baixa expectativa de recuperação \\
         D & $0{,}00 \le \tilde{p} < 0{,}03$ & Recuperação muito improvável \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Os gráficos e tabelas do Capítulo \ref{cap:resultados_analise} identificam as variáveis do modelo por nomes descritivos, e não pelos nomes técnicos das colunas. A Tabela \ref{tab:glossario_variaveis} faz a correspondência entre os dois e explica o que cada variável mede.
 
-\begin{table}[H]
-    \centering
+{\renewcommand{\arraystretch}{1.2}
+\setlength{\LTcapwidth}{\textwidth}
+% Tabela longa: pode continuar na página seguinte, repetindo o cabeçalho.
+\begin{longtable}{>{\small\raggedright\arraybackslash}p{3.7cm}>{\small\raggedright\arraybackslash}p{4.4cm}>{\small\raggedright\arraybackslash}p{\dimexpr\textwidth-8.1cm-6\tabcolsep\relax}}
     \caption[Variáveis do modelo citadas nos resultados]{Variáveis do modelo de \textit{rating} que aparecem nas figuras e tabelas dos resultados. A primeira coluna é o nome usado nos gráficos; a segunda, o nome da coluna no modelo de produção; a terceira, o que a variável mede. ``Devedor'' designa o núcleo do contribuinte, identificador que agrupa as CDAs vinculadas a um mesmo CPF ou CNPJ.}
-    \label{tab:glossario_variaveis}
-    \footnotesize
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{>{\raggedright\arraybackslash}p{3.8cm} >{\raggedright\arraybackslash}p{4.3cm} >{\raggedright\arraybackslash}p{6.0cm}}
-        \toprule
-        \textbf{Nome nos gráficos} & \textbf{Coluna no modelo} & \textbf{O que mede} \\
-        \midrule
+    \label{tab:glossario_variaveis} \\
+    \toprule
+    \textbf{Nome nos gráficos} & \textbf{Coluna no modelo} & \textbf{O que mede} \\
+    \midrule
+    \endfirsthead
+    \multicolumn{3}{l}{\small\textit{(continuação)}} \\
+    \toprule
+    \textbf{Nome nos gráficos} & \textbf{Coluna no modelo} & \textbf{O que mede} \\
+    \midrule
+    \endhead
+    \bottomrule
+    \endlastfoot
         Dívidas em aberto do devedor & \texttt{div\_abertas\_nucleo} & Número de CDAs ainda em aberto vinculadas ao mesmo devedor. \\
         Dívida total do CPF/CNPJ & \texttt{val\_div\_cpfcnpj} & Soma dos valores corrigidos das dívidas inscritas no mesmo CPF ou CNPJ, em reais. \\
         Histórico de regularização do devedor & \texttt{hist\_reg\_total\_nucleo} & Proporção das demais dívidas do devedor que foram pagas ou parceladas. \\
@@ -80,9 +88,9 @@ Os gráficos e tabelas do Capítulo \ref{cap:resultados_analise} identificam as 
         Mudanças de situação da CDA & \texttt{qtd\_situacoes} & Número de vezes que a situação da CDA mudou desde a inscrição. \\
         Origem da dívida & \texttt{cd\_origem} & Forma de constituição da dívida, substituída pela taxa histórica de pagamento da categoria. \\
         Pessoa jurídica & \texttt{se\_cnpj} & Se o contribuinte é identificado por CNPJ (usada no experimento do IPTU). \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+        
+\end{longtable}
+}
 
 \section{Dados Sintéticos}
 \label{sec:dados_sinteticos}
@@ -147,18 +155,17 @@ A Tabela \ref{tab:comparacao_sintetizadores} resume os resultados.
     \caption[Fidelidade dos quatro sintetizadores em relação à base real]{Fidelidade dos quatro sintetizadores avaliados em relação à base real, agregada sobre os \textit{setups} em que cada um foi executado. Em todas as colunas, valores menores indicam dados sintéticos mais próximos dos reais. O erro da mediana considera as combinações de \textit{setup} e variável monetária disponíveis (14 para as três primeiras estratégias e 3 para o CTGAN+log); a TVD considera as variáveis categóricas comparáveis, excluída a data de nascimento do IPVA. O CTGAN+log foi executado apenas em ISS e Taxas. A estratégia escolhida, \textit{GaussianCopula}+log, aparece em negrito.}
     \label{tab:comparacao_sintetizadores}
     \small
-    \begin{tabular}{lcccc}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.1cm}>{\centering\arraybackslash}p{1.4cm}CCC}
         \toprule
-        \textbf{Sintetizador} & \textbf{\textit{Setups}} & \textbf{Erro da} & \textbf{TVD} & \textbf{Ausentes} \\
-         & & \textbf{mediana} & \textbf{categórica} & \textbf{(p.p.)} \\
-         & & \textbf{(mediana / máx.)} & \textbf{(mediana)} & \textbf{(média)} \\
+        \textbf{Sintetizador} & \textbf{\textit{Setups}} & \textbf{Erro da mediana (mediana / máximo)} & \textbf{TVD categórica (mediana)} & \textbf{Ausentes, p.p. (média)} \\
         \midrule
-        \textit{GaussianCopula}           & 5 & 1,255 / 32,584 & 0,005 & 0,08 \\
+        \textit{GaussianCopula}              & 5 & 1,255 / 32,584 & 0,005 & 0,08 \\
         \textbf{\textit{GaussianCopula}+log} & \textbf{5} & \textbf{0,135 / 0,930} & \textbf{0,006} & \textbf{0,06} \\
-        TVAE+log                          & 5 & 0,113 / 0,905 & 0,103 & 0,48 \\
-        CTGAN+log                         & 2 & 0,154 / 0,196 & 0,216 & 0,64 \\
+        TVAE+log                             & 5 & 0,113 / 0,905 & 0,103 & 0,48 \\
+        CTGAN+log                            & 2 & 0,154 / 0,196 & 0,216 & 0,64 \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Sem a transformação logarítmica, a cópula gaussiana errou a mediana das variáveis monetárias em 125\% no caso típico e em mais de 3.000\% no pior caso (multa do ICMS); com ela, o erro típico caiu para 13,5\%. O TVAE+log obteve erro de mediana ligeiramente menor, mas distorceu as variáveis categóricas (TVD mediana 17 vezes maior) e a proporção de valores ausentes. O CTGAN+log, avaliado apenas em ISS e Taxas, apresentou a maior distorção categórica e a maior diferença na proporção de valores ausentes. A \textit{GaussianCopula}+log foi escolhida por oferecer o melhor equilíbrio entre os três critérios.

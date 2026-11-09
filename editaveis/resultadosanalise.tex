@@ -30,23 +30,23 @@ A Tabela \ref{tab:icms_ensemble_importance} resume as dez variáveis de maior re
     \caption[Dez variáveis mais importantes do \textit{ensemble} do ICMS e sua variação entre os três modelos]{Dez variáveis mais importantes do \textit{ensemble} do ICMS e sua variação entre os três modelos XGBoost que o compõem, calculadas sobre 50.000 CDAs sintéticas. A média SHAP é a média, entre os três modelos, da importância global de cada um (média do valor absoluto de SHAP). O desvio padrão e o coeficiente de variação (desvio dividido pela média) medem quanto os três modelos discordam sobre essa importância: valores próximos de zero indicam que os modelos atribuem à variável praticamente o mesmo peso. Apenas a multa em proporção da dívida supera 0,15 de coeficiente de variação, o que indica um \textit{ensemble} internamente coerente.}
     \label{tab:icms_ensemble_importance}
     \small
-    \begin{tabular}{p{6cm}ccc}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{6.2cm}CCC}
         \toprule
-        \textbf{Variável} & \textbf{Média} & \textbf{Desvio} & \textbf{Coeficiente} \\
-         & \textbf{SHAP} & \textbf{padrão} & \textbf{de variação} \\
+        \textbf{Variável} & \textbf{Média SHAP} & \textbf{Desvio padrão} & \textbf{Coeficiente de variação} \\
         \midrule
-        Dívidas em aberto do devedor     & 0,3250 & 0,0146 & 0,0451 \\
-        Dívida total do CPF/CNPJ        & 0,2682 & 0,0083 & 0,0309 \\
-        Histórico de regularização do devedor & 0,2188 & 0,0102 & 0,0467 \\
-        Anos sem movimentação da dívida           & 0,2161 & 0,0025 & 0,0114 \\
-        Ano do fato gerador          & 0,1625 & 0,0151 & 0,0928 \\
-        Empresa com cadastro ativo                & 0,1352 & 0,0096 & 0,0710 \\
-        Situação atual da CDA        & 0,1289 & 0,0067 & 0,0520 \\
-        Regularização do devedor em 5 anos    & 0,1267 & 0,0035 & 0,0277 \\
-        Multa em proporção da dívida               & 0,1016 & 0,0390 & 0,3838 \\
-        Valor corrigido da dívida           & 0,1006 & 0,0147 & 0,1457 \\
+        Dívidas em aberto do devedor            & 0,3250 & 0,0146 & 0,0451 \\
+        Dívida total do CPF/CNPJ                & 0,2682 & 0,0083 & 0,0309 \\
+        Histórico de regularização do devedor   & 0,2188 & 0,0102 & 0,0467 \\
+        Anos sem movimentação da dívida         & 0,2161 & 0,0025 & 0,0114 \\
+        Ano do fato gerador                     & 0,1625 & 0,0151 & 0,0928 \\
+        Empresa com cadastro ativo              & 0,1352 & 0,0096 & 0,0710 \\
+        Situação atual da CDA                   & 0,1289 & 0,0067 & 0,0520 \\
+        Regularização do devedor em 5 anos      & 0,1267 & 0,0035 & 0,0277 \\
+        Multa em proporção da dívida            & 0,1016 & 0,0390 & 0,3838 \\
+        Valor corrigido da dívida               & 0,1006 & 0,0147 & 0,1457 \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Os resultados da Tabela \ref{tab:icms_ensemble_importance} indicam que o \textit{ensemble} não é composto por modelos semanticamente contraditórios. Entre os dez fatores mais relevantes de cada modelo individual, nove aparecem simultaneamente nos três membros do conjunto, ao passo que a união total dos \textit{top-10} contém apenas onze variáveis distintas. Em termos práticos, isso significa que a média dos valores de SHAP entre os modelos preserva uma estrutura explicativa coerente, reforçando a adequação dessa estratégia para representar a decisão agregada do \textit{ensemble}.
@@ -62,9 +62,10 @@ Para avaliar a utilidade comparativa das duas técnicas de explicabilidade, fora
     \caption[Concordância entre SHAP e LIME e estabilidade do LIME, por \textit{setup}]{Concordância entre SHAP e LIME e estabilidade do LIME, por \textit{setup}. Cada valor é a média dos quatro casos representativos do \textit{setup} (uma CDA sintética por classe de \textit{rating}). \textit{Jaccard}@5 é a fração de variáveis em comum entre as cinco principais de cada método (0 a 1). RBO@5 mede a mesma concordância dando mais peso às primeiras posições; na forma truncada utilizada, seu valor máximo é 0,41, e não 1. A estabilidade do LIME é o \textit{Jaccard}@5 médio entre 30 execuções do LIME com sementes diferentes (1 indica explicações idênticas). A última coluna é o número médio de variáveis distintas que apareceram entre as cinco principais ao longo dessas 30 execuções; quanto menor, mais estável. Em todas as colunas, exceto a última, valores maiores indicam mais concordância ou estabilidade.}
     \label{tab:comparacao_setups}
     \small
-    \begin{tabular}{lcccc}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{LCCCC}
         \toprule
-        \textbf{\textit{Setup}} & \textbf{Jaccard@5} & \textbf{RBO@5} & \textbf{Estabilidade do LIME} & \textbf{Features únicas no top-5} \\
+        \textbf{\textit{Setup}} & \textbf{Jaccard@5} & \textbf{RBO@5} & \textbf{Estabilidade do LIME} & \textbf{Variáveis distintas no \textit{top-5}} \\
         \midrule
         ICMS  & 0,3492 & 0,1142 & 0,6920 & 11,25 \\
         ISS   & 0,5030 & 0,2375 & 0,8438 & 8,25 \\
@@ -72,7 +73,7 @@ Para avaliar a utilidade comparativa das duas técnicas de explicabilidade, fora
         IPTU  & 0,4435 & 0,2589 & 0,8973 & 6,50 \\
         Taxas & 0,3393 & 0,1980 & 0,7970 & 8,75 \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Os resultados da Tabela \ref{tab:comparacao_setups} mostram que a concordância entre SHAP e LIME é parcial, e não total, em todos os cenários observados. Como o RBO@5 truncado tem teto de 0,41 (Seção \ref{sec:procedimentos_xai}), as médias entre 0,11 e 0,26 correspondem a algo entre 28\% e 63\% da concordância máxima possível nas primeiras posições. O \textit{setup} com maior alinhamento médio foi o \textit{ISS}, com \textit{Jaccard@5} de 0,5030, seguido por \textit{IPTU}. Na extremidade oposta, \textit{IPVA} apresentou a menor concordância média, com 0,3046. O caso de \textit{ICMS} merece atenção especial: embora seja o \textit{setup} mais rico em artefatos e o principal estudo de caso do trabalho, ele não foi o mais alinhado entre os métodos, o que o torna particularmente útil para discutir as tensões metodológicas entre explicabilidade baseada em teoria dos jogos e explicabilidade local por aproximação.
@@ -84,16 +85,17 @@ A análise por classe de \textit{rating}, sintetizada na Tabela \ref{tab:compara
     \caption[Concordância entre SHAP e LIME e estabilidade do LIME, por classe de \textit{rating}]{Concordância entre SHAP e LIME e estabilidade do LIME, por classe de \textit{rating}. Cada valor é a média dos cinco casos da classe (uma CDA sintética representativa por imposto). As métricas são as mesmas da Tabela \ref{tab:comparacao_setups}: \textit{Jaccard}@5 varia de 0 a 1, RBO@5 tem teto de 0,41, a estabilidade do LIME é a concordância média entre 30 execuções, e a última coluna conta as variáveis distintas que passaram pelo \textit{top-5} do LIME nessas execuções. As classes extremas (A e D) apresentam o LIME mais estável, e a classe D, a maior concordância entre os métodos.}
     \label{tab:comparacao_ratings}
     \small
-    \begin{tabular}{lcccc}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{LCCCC}
         \toprule
-        \textbf{\textit{Rating}} & \textbf{Jaccard@5} & \textbf{RBO@5} & \textbf{Estabilidade do LIME} & \textbf{Features únicas no top-5} \\
+        \textbf{\textit{Rating}} & \textbf{Jaccard@5} & \textbf{RBO@5} & \textbf{Estabilidade do LIME} & \textbf{Variáveis distintas no \textit{top-5}} \\
         \midrule
         A & 0,3294 & 0,1708 & 0,8104 & 8,60 \\
         B & 0,4405 & 0,1951 & 0,7618 & 9,00 \\
         C & 0,2937 & 0,1882 & 0,7632 & 9,80 \\
         D & 0,4881 & 0,2286 & 0,8596 & 7,80 \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Na Tabela \ref{tab:comparacao_ratings}, o \textit{rating} D apresenta a maior média de concordância entre os métodos, enquanto o \textit{rating} C exibe a menor. Esse comportamento sugere que, em situações mais extremas, os fatores decisórios do modelo tornam-se mais nítidos e, por consequência, mais facilmente capturados por técnicas explicativas distintas. Já nos casos intermediários, a decisão parece depender de interações mais sensíveis ao método de interpretação empregado.
@@ -153,21 +155,21 @@ Reduzir apenas os pagadores PJ (variante 2) teve efeito imediato. Com metade das
 
 \begin{table}[H]
     \centering
-    \caption[Métricas de performance e de viés do modelo substituto em cenários selecionados]{Métricas de performance e de viés do modelo substituto do IPTU em cenários selecionados, medidas no mesmo conjunto de teste (15.000 CDAs sintéticas com proporções naturais). Cada valor é a média de cinco treinamentos. ``PJ pagas no treino'' é o número de CDAs de pessoa jurídica com pagamento que o modelo viu no treinamento. ``Favorável PJ'' é a fração de CDAs de PJ classificadas como A ou B; a de PF ficou em 0,24 em todos os cenários. DI abaixo de 0,8 e EOD acima de zero indicam desvantagem para PJ. ``Peso PJ'' é a contribuição SHAP média, em log-odds, da variável ``pessoa jurídica'' nas CDAs de PJ; valores negativos indicam que o modelo penaliza o contribuinte por ser PJ.}
+    \caption[Métricas de performance e de viés do modelo substituto em cenários selecionados]{Métricas de performance e de viés do modelo substituto do IPTU em cenários selecionados, medidas no mesmo conjunto de teste (15.000 CDAs sintéticas com proporções naturais). Cada valor é a média de cinco treinamentos. ``PJ pagas'' é o número de CDAs de pessoa jurídica com pagamento que o modelo viu no treinamento. ``A ou B (PJ)'' é a fração de CDAs de PJ classificadas como A ou B (decisão favorável); a de PF ficou em 0,24 em todos os cenários. DI abaixo de 0,8 e EOD acima de zero indicam desvantagem para PJ. ``Peso PJ'' é a contribuição SHAP média, em log-odds, da variável ``pessoa jurídica'' nas CDAs de PJ; valores negativos indicam que o modelo penaliza o contribuinte por ser PJ.}
     \label{tab:desbalanceamento}
     \small
-    \begin{tabular}{lccccccc}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.8cm}CCCCCCC}
         \toprule
-        \textbf{Cenário} & \textbf{PJ pagas} & \textbf{AUC} & \textbf{AUC} & \textbf{Favorável} & \textbf{DI} & \textbf{EOD} & \textbf{Peso} \\
-         & \textbf{no treino} & \textbf{geral} & \textbf{PJ} & \textbf{PJ} & & & \textbf{PJ} \\
+        \textbf{Cenário} & \textbf{PJ pagas} & \textbf{AUC geral} & \textbf{AUC PJ} & \textbf{A ou B (PJ)} & \textbf{DI} & \textbf{EOD} & \textbf{Peso PJ} \\
         \midrule
-        Sem manipulação         & 888 & 0,782 & 0,778 & 0,303 & 1,24 & $-0{,}07$ & $+0{,}08$ \\
-        Variante 1, 5\%         &  42 & 0,781 & 0,780 & 0,268 & 1,10 & $-0{,}02$ & $+0{,}00$ \\
-        Variante 2, 50\%        & 444 & 0,777 & 0,774 & 0,149 & 0,61 & $+0{,}19$ & $-0{,}45$ \\
-        Variante 2, 25\%        & 222 & 0,763 & 0,764 & 0,052 & 0,21 & $+0{,}40$ & $-1{,}05$ \\
-        Variante 2, 5\%         &  44 & 0,726 & 0,736 & 0,001 & 0,00 & $+0{,}55$ & $-2{,}56$ \\
+        Sem alteração    & 888 & 0,782 & 0,778 & 0,303 & 1,24 & $-0{,}07$ & $+0{,}08$ \\
+        Variante 1, 5\%  &  42 & 0,781 & 0,780 & 0,268 & 1,10 & $-0{,}02$ & $+0{,}00$ \\
+        Variante 2, 50\% & 444 & 0,777 & 0,774 & 0,149 & 0,61 & $+0{,}19$ & $-0{,}45$ \\
+        Variante 2, 25\% & 222 & 0,763 & 0,764 & 0,052 & 0,21 & $+0{,}40$ & $-1{,}05$ \\
+        Variante 2, 5\%  &  44 & 0,726 & 0,736 & 0,001 & 0,00 & $+0{,}55$ & $-2{,}56$ \\
         \bottomrule
-    \end{tabular}
+    \end{tabularx}
 \end{table}
 
 Dois resultados merecem destaque. O primeiro é que a performance agregada esconde o viés: no cenário de 50\%, a AUC geral passou de 0,782 para 0,777, uma variação que dificilmente chamaria atenção em uma validação convencional, enquanto a razão de impacto já indicava desvantagem forte contra PJ. Somente as métricas calculadas por grupo revelaram o problema, como antecipado na discussão sobre médias micro e macro. O segundo é que a explicabilidade torna o viés visível: a contribuição SHAP média da variável ``pessoa jurídica'' para as CDAs de PJ passou de $+0{,}08$ para $-0{,}45$ com metade dos pagadores e para $-2{,}56$ no cenário extremo. Um auditor que examinasse a explicação de uma CDA de PJ veria que a classificação desfavorável decorre, em parte relevante, do simples fato de o contribuinte ser pessoa jurídica, e não de sua conduta fiscal. Esse é exatamente o tipo de sinal que a camada de explicabilidade proposta neste trabalho permite detectar.
