@@ -1,0 +1,65 @@
+# Gera o PDF da monografia a cada push no main e publica na release "pdf-latest",
+# substituindo a versão anterior. O link da release é fixo e sempre aponta para o PDF mais recente.
+name: Gerar PDF
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: gerar-pdf
+  cancel-in-progress: true
+
+env:
+  PDF_NOME: TCC2-ArthurG-CaioB.pdf
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    container: texlive/texlive:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar com pdflatex, bibtex e makeindex
+        run: |
+          pdflatex -interaction=nonstopmode -halt-on-error tcc.tex
+          # bibtex sai com código 1 quando há apenas avisos; 2 ou mais é erro.
+          bibtex tcc || [ $? -eq 1 ]
+          makeindex tcc.idx
+          pdflatex -interaction=nonstopmode -halt-on-error tcc.tex
+          pdflatex -interaction=nonstopmode -halt-on-error tcc.tex
+          mv tcc.pdf "$PDF_NOME"
+
+      - name: Falhar se houver referência ou citação indefinida
+        run: |
+          if tr -d '\n' < tcc.log | grep -qE '(Reference|Citation)[^.]*undefined'; then
+            tr -d '\n' < tcc.log | grep -oE '(Reference|Citation)[^.]*undefined' | sort -u
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf
+          path: ${{ env.PDF_NOME }}
+
+  publicar:
+    needs: compilar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pdf
+
+      - name: Atualizar a release pdf-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete pdf-latest --cleanup-tag --yes || true
+          gh release create pdf-latest "$PDF_NOME" \
+            --target "$GITHUB_SHA" \
+            --title "PDF mais recente" \
+            --notes "Gerado automaticamente a partir do commit ${GITHUB_SHA::7} em $(date -u '+%d/%m/%Y %H:%M') UTC."
