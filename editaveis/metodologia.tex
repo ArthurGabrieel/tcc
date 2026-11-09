@@ -51,11 +51,11 @@ Os gráficos e tabelas do Capítulo \ref{cap:resultados_analise} identificam as 
 
 \begin{table}[H]
     \centering
-    \caption[Variáveis do modelo citadas nos resultados]{Variáveis do modelo de \textit{rating} citadas nas figuras e tabelas dos resultados. A primeira coluna é o nome usado nos gráficos; a segunda, o nome da coluna no modelo de produção; a terceira, o que a variável mede. ``Devedor'' designa o núcleo do contribuinte, identificador que agrupa as CDAs vinculadas a um mesmo CPF ou CNPJ.}
+    \caption[Variáveis do modelo citadas nos resultados]{Variáveis do modelo de \textit{rating} que aparecem nas figuras e tabelas dos resultados. A primeira coluna é o nome usado nos gráficos; a segunda, o nome da coluna no modelo de produção; a terceira, o que a variável mede. ``Devedor'' designa o núcleo do contribuinte, identificador que agrupa as CDAs vinculadas a um mesmo CPF ou CNPJ.}
     \label{tab:glossario_variaveis}
     \footnotesize
     \renewcommand{\arraystretch}{1.2}
-    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm} >{\raggedright\arraybackslash}p{3.9cm} >{\raggedright\arraybackslash}p{6.3cm}}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.8cm} >{\raggedright\arraybackslash}p{4.3cm} >{\raggedright\arraybackslash}p{6.0cm}}
         \toprule
         \textbf{Nome nos gráficos} & \textbf{Coluna no modelo} & \textbf{O que mede} \\
         \midrule
@@ -69,7 +69,16 @@ Os gráficos e tabelas do Capítulo \ref{cap:resultados_analise} identificam as 
         Situação atual da CDA & \texttt{situacao\_inicial} & Situação da CDA na data de referência (em aberto, parcelada, suspensa etc.). \\
         Multa em proporção da dívida & \texttt{val\_multa} & Valor da multa dividido pelo valor da dívida. \\
         Valor corrigido da dívida & \texttt{val\_div\_corr} & Valor da CDA atualizado monetariamente, em reais. \\
-        Idade da dívida & \texttt{idade\_divida\_meses} & Meses desde a inscrição em dívida ativa. \\
+        Idade da dívida (meses) & \texttt{idade\_divida\_meses} & Meses desde a inscrição em dívida ativa. \\
+        Regime tributário no ICMS & \texttt{regime\_tributario\_icms} & Regime de tributação do contribuinte no cadastro do ICMS, agrupado nas categorias mais frequentes. \\
+        Regime tributário no ISS & \texttt{regime\_tributario\_iss} & O mesmo, no cadastro do ISS. \\
+        Inscrições ativas do devedor & \texttt{qtd\_ativos\_nucleo} & Número de inscrições do devedor ativas no cadastro fiscal. \\
+        Idade da empresa & \texttt{idade\_emp} & Tempo de existência da empresa quando a dívida foi inscrita, em faixas (menos de 2, de 2 a 4 e 4 anos ou mais). \\
+        Tipo de receita & \texttt{cd\_receita} & Código do tributo ou da obrigação que originou a dívida. \\
+        Imóveis do devedor & \texttt{qtd\_imoveis} & Número de imóveis vinculados ao CPF ou CNPJ (limitado a 3). \\
+        Histórico de pagamento do devedor & \texttt{hist\_pgto\_nucleo} & Proporção das dívidas do devedor que foram pagas. \\
+        Mudanças de situação da CDA & \texttt{qtd\_situacoes} & Número de vezes que a situação da CDA mudou desde a inscrição. \\
+        Origem da dívida & \texttt{cd\_origem} & Forma de constituição da dívida, substituída pela taxa histórica de pagamento da categoria. \\
         Pessoa jurídica & \texttt{se\_cnpj} & Se o contribuinte é identificado por CNPJ (usada no experimento do IPTU). \\
         \bottomrule
     \end{tabular}
