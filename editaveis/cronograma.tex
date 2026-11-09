@@ -1,0 +1,48 @@
+% Cronograma do TCC. Cada linha é uma etapa; cada coluna, um mês (set/2025 a dez/2026).
+% \cF = etapa realizada no mês; \cP = etapa prevista. Para ajustar, mova os \cF/\cP entre as colunas.
+\definecolor{cronoFeito}{rgb}{0.255,0.345,0.176}
+\definecolor{cronoPrevisto}{gray}{0.75}
+\newcommand{\cF}{\textcolor{cronoFeito}{\rule{\linewidth}{1.6ex}}}
+\newcommand{\cP}{\textcolor{cronoPrevisto}{\rule{\linewidth}{1.6ex}}}
+
+\begin{table}[H]
+    \centering
+    \caption[Cronograma de execução do trabalho]{Cronograma de execução do trabalho, de setembro de 2025 a dezembro de 2026. Cada linha é uma etapa e cada coluna é um mês, identificado pela inicial (S = setembro, O = outubro, N = novembro, D = dezembro, J = janeiro e assim por diante). Células verdes indicam os meses em que a etapa foi realizada; células cinza, os meses em que ela está prevista. O primeiro bloco corresponde ao TCC1, dedicado ao planejamento e à elaboração do projeto, e o segundo ao TCC2, dedicado à execução técnica e à escrita da monografia.}
+    \label{tab:cronograma}
+    \scriptsize
+    \setlength{\tabcolsep}{1.6pt}
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{6.6cm} *{16}{>{\centering\arraybackslash}p{0.42cm}}}
+        \toprule
+        & \multicolumn{4}{c}{\textbf{2025}} & \multicolumn{12}{c}{\textbf{2026}} \\
+        \cmidrule(lr){2-5} \cmidrule(lr){6-17}
+        \textbf{Etapa} & S & O & N & D & J & F & M & A & M & J & J & A & S & O & N & D \\
+        \multicolumn{17}{l}{\textbf{TCC1: planejamento e projeto}} \\
+        Background e fundamentação & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Revisão bibliográfica: gestão fiscal & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Revisão bibliográfica: legal (LGPD) & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Revisão bibliográfica: técnica (XAI) & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Problematização e objetivos &  & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Elaboração do projeto &  & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Escrita: referencial teórico &  & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Escrita: introdução e justificativa &  & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Escrita: metodologia &  &  & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Análise &  &  & \cF & \cF &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Cronograma &  &  & \cF &  &  &  &  &  &  &  &  &  &  &  &  &  \\
+        Defesa do TCC1 &  &  &  & \cF &  &  &  &  &  &  &  &  &  &  &  &  \\
+        \midrule
+        \multicolumn{17}{l}{\textbf{TCC2: execução e monografia}} \\
+        Reprodução do pipeline de produção &  &  &  &  & \cF & \cF & \cF &  &  &  &  &  &  &  &  &  \\
+        Geração e validação dos dados sintéticos &  &  &  &  &  &  & \cF & \cF & \cF &  &  &  &  &  &  &  \\
+        Aplicação do SHAP (global e local) &  &  &  &  &  &  &  & \cF & \cF & \cF &  &  &  &  &  &  \\
+        Aplicação do LIME e análise de estabilidade &  &  &  &  &  &  &  &  & \cF & \cF &  &  &  &  &  &  \\
+        Comparação entre SHAP e LIME &  &  &  &  &  &  &  &  &  & \cF & \cF &  &  &  &  &  \\
+        Estrutura visual de apoio ao auditor &  &  &  &  &  &  &  &  & \cF & \cF &  &  &  &  &  &  \\
+        Escrita da monografia &  &  &  &  &  &  &  &  &  & \cF & \cF & \cF & \cF &  &  &  \\
+        Ajustes solicitados pelo orientador &  &  &  &  &  &  &  &  &  &  &  &  &  & \cF & \cF &  \\
+        Experimento de desbalanceamento &  &  &  &  &  &  &  &  &  &  &  &  &  &  & \cF &  \\
+        Revisão final e entrega &  &  &  &  &  &  &  &  &  &  &  &  &  &  & \cP &  \\
+        Defesa do TCC2 &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  & \cP \\
+        \bottomrule
+    \end{tabular}
+\end{table}

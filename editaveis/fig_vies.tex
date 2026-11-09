@@ -1,0 +1,50 @@
+% Figura do referencial: o exemplo hipotético de viés entre duas regiões e o ciclo que o reforça.
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[font=\footnotesize, seta/.style={-{Stealth[length=2.2mm]}, thick}]
+        % (a) Barras do exemplo: escala de 0 a 100% em 4 cm
+        \begin{scope}
+            \def\h{0.04}
+            \draw[->] (0,0) -- (0,4.6);
+            \node[rotate=90, font=\scriptsize] at (-0.75,2.0) {\% de CDAs com \textit{rating} A ou B};
+            \draw (0,0) -- (6.6,0);
+            \foreach \y in {0,25,50,75,100} {
+                \draw (-0.08,\y*\h) -- (0,\y*\h) node[left, font=\scriptsize] {\y};
+                \draw[gray!30] (0,\y*\h) -- (6.6,\y*\h);
+            }
+            % Grupo 1: todas as CDAs
+            \fill[gray!35] (0.5,0) rectangle (1.4,60*\h);   \node[above] at (0.95,60*\h) {60};
+            \fill[black!75] (1.5,0) rectangle (2.4,36*\h);  \node[above] at (1.95,36*\h) {36};
+            \node[align=center, below] at (1.45,-0.05) {Todas as\\CDAs};
+            % Grupo 2: apenas quem pagou
+            \fill[gray!35] (3.8,0) rectangle (4.7,85*\h);   \node[above] at (4.25,85*\h) {85};
+            \fill[black!75] (4.8,0) rectangle (5.7,55*\h);  \node[above] at (5.25,55*\h) {55};
+            \node[align=center, below] at (4.75,-0.05) {Apenas quem\\de fato pagou};
+            % Métricas
+            \node[align=center, font=\scriptsize, fill=white, inner sep=1pt] at (1.45,3.45) {$SPD = 0{,}24$\\$DI = 0{,}60$};
+            \node[align=center, font=\scriptsize, fill=white, inner sep=1pt] at (4.75,4.25) {$EOD = 0{,}30$};
+            % Legenda
+            \fill[gray!35] (0.4,-1.45) rectangle (0.7,-1.2);  \node[right] at (0.7,-1.33) {Região 1};
+            \fill[black!75] (2.6,-1.45) rectangle (2.9,-1.2); \node[right] at (2.9,-1.33) {Região 2};
+            \node[font=\bfseries] at (3.3,-2.1) {(a) Medição do viés};
+        \end{scope}
+
+        % (b) Ciclo de retroalimentação
+        \begin{scope}[xshift=11.4cm, yshift=2.0cm,
+                      etapa/.style={draw, rounded corners=2pt, align=center, text width=3.5cm, fill=gray!8, inner sep=3pt}]
+            \node[etapa] (dados) at (0,1.9)  {Histórico com poucos pagamentos registrados da região 2};
+            \node[etapa] (modelo) at (2.45,0) {Modelo aprende que a região 2 paga menos};
+            \node[etapa] (rating) at (0,-1.9) {Contribuintes da região 2 recebem C ou D};
+            \node[etapa] (acao) at (-2.45,0)  {Menos negociação e cobrança na região 2};
+            \draw[seta] (dados.east) to[bend left=25] (modelo.north);
+            \draw[seta] (modelo.south) to[bend left=25] (rating.east);
+            \draw[seta] (rating.west) to[bend left=25] (acao.south);
+            \draw[seta] (acao.north) to[bend left=25] (dados.west);
+            \node[font=\bfseries] at (0,-4.1) {(b) Ciclo que reforça o viés};
+        \end{scope}
+    \end{tikzpicture}%
+    }
+    \caption[Ilustração do viés algorítmico entre dois grupos de contribuintes]{Ilustração do viés algorítmico com o exemplo hipotético de duas regiões administrativas. Em (a), as barras mostram a porcentagem de CDAs classificadas como A ou B (decisão favorável) em cada região. À esquerda, considerando todas as CDAs, a região 2 recebe menos decisões favoráveis (36\% contra 60\%), o que resulta em paridade estatística ($SPD$) de 0,24 e razão de impacto ($DI$) de 0,60, abaixo do limite de 0,8. À direita, considerando apenas os contribuintes que de fato pagaram, a diferença persiste (55\% contra 85\%, $EOD = 0{,}30$): o modelo reconhece com menos frequência os bons pagadores da região 2, o que caracteriza uma decisão injusta e não apenas uma diferença entre as regiões. Em (b), o ciclo mostra como esse viés tende a se reforçar: a classificação desfavorável reduz a atuação sobre o grupo, menos pagamentos são registrados e o próximo treinamento do modelo confirma a predição original.}
+    \label{fig:ilustracao_vies}
+\end{figure}

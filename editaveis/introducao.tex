@@ -1,0 +1,68 @@
+\chapter{Introdução}
+\label{cap:introducao}
+
+\section{Considerações Iniciais}
+
+O presente capítulo contextualiza o objeto de estudo deste trabalho, estabelecendo o panorama atual da gestão da dívida ativa e a crescente adoção de inteligência artificial no setor público. A partir dessa base teórica, delineia-se a problemática central que motiva a pesquisa: o conflito entre a opacidade algorítmica e o dever de motivação dos atos administrativos, culminando na definição da questão norteadora e dos objetivos do estudo. Por fim, apresenta-se a organização estrutural desta monografia.
+
+\section{Contexto e Problematização}
+
+A gestão da Dívida Ativa (DA) no setor público vai além da mera cobrança administrativa, caracterizando-se na literatura especializada como um complexo problema de alocação eficiente de recursos escassos. Este campo de estudo, contemporaneamente denominado análise tributária baseada em dados (\textit{Tax Analytics}), guarda estreita isomorfia técnica com as práticas de pontuação de crédito (\textit{Credit Scoring}) do setor financeiro. Em ambos os cenários, o objetivo primordial é mitigar a assimetria de informação por meio da estimativa probabilística de um evento futuro, seja a inadimplência (\textit{default}), seja a regularização fiscal, utilizando-se grandes volumes de dados históricos para prever comportamentos \cite{changCreditRiskPrediction2024, noriegaMachineLearningCredit2023}.
+
+Nesse contexto, a precisão na avaliação da solvência e da propensão ao pagamento torna-se crítica, pois impacta diretamente a estabilidade macroeconômica e a capacidade do Estado de financiar políticas públicas por meio da arrecadação eficiente \cite{zouInterpretableCreditScoring2025}. No âmbito do Distrito Federal, essa modernização materializou-se no Rating da Dívida Ativa da Secretaria de Economia (SEFAZ-DF), entendido, neste trabalho, como a classificação de recuperabilidade dos créditos inscritos. Instituída pela Lei Complementar \textnumero{} 1.026/2023, essa iniciativa estratégica visa classificar os créditos inscritos em quatro categorias (A, B, C, D), de acordo com a expectativa de recuperação em um horizonte de cinco anos. Segundo a metodologia oficial, tal classificação deriva de uma análise tridimensional que pondera dados do débito, do perfil do devedor e das características do objeto, operacionalizada por algoritmos de aprendizado de máquina (ML) \cite{sefazdf2025rating}. A Figura \ref{fig:cenario_aplicacao} resume esse cenário de aplicação, desde a coleta dos dados até o uso da classificação, e indica onde se insere a contribuição deste trabalho.
+
+\input{editaveis/fig_cenario}
+
+\section{A Relevância Tecnológica e o Dilema da Transparência}
+
+Para a operacionalização do Rating, a SEFAZ-DF adotou o modelo \textit{Gradient Boosting Decision Trees}, implementado via biblioteca XGBoost. Trata-se de um método de aprendizado de máquina baseado na combinação sequencial de árvores de decisão, capaz de capturar relações não lineares em dados tabulares. Essa escolha técnica justifica-se pela boa performance reportada na literatura em métricas de acurácia e generalização \cite{tianCreditRiskAssessment2020}. Contudo, a natureza de caixa-preta desse modelo introduz riscos significativos para a gestão da Dívida Ativa que não podem ser mitigados apenas pela performance do modelo.
+
+\textbf{Problemas da Opacidade (``Caixa-Preta'') na Gestão Fiscal:}
+A utilização de modelos opacos na administração tributária gera um vácuo de fundamentação. Um contribuinte classificado como ``Classe D'' (irrecuperável) sofre consequências administrativas reais, mas o modelo, por si só, é incapaz de fornecer a ``motivação'' do ato administrativo, um requisito essencial de validade. Isso cria insegurança jurídica, pois a Administração não consegue explicar, em nível individual, quais critérios fáticos levaram àquela classificação específica, dificultando ou impedindo o exercício do contraditório e da ampla defesa previstos na Constituição e na Lei Geral de Proteção de Dados (LGPD, Art. 20) \cite{molnarInterpretableMachineLearning}.
+
+\textbf{Benefícios da Explicabilidade:}
+A implementação de uma camada de Inteligência Artificial Explicável (XAI, do inglês \textit{Explainable Artificial Intelligence}) propõe solucionar esse impasse, trazendo benefícios tangíveis:
+\begin{itemize}
+    \item \textbf{Conformidade Legal e Processual:} Permite operacionalizar o direito de revisão, fornecendo ao auditor elementos quantitativos de interpretação, com a indicação do impacto estimado de variáveis específicas na decisão algorítmica.
+    \item \textbf{Detecção de Vieses e Erros:} Facilita a identificação de dados desatualizados (ex: uma empresa marcada como inativa que já regularizou sua situação) que estariam ``escondidos'' dentro da caixa-preta.
+    \item \textbf{Legitimidade e Confiança:} Transforma a classificação de um ``oráculo'' inquestionável para uma decisão administrativa auditável, fortalecendo a relação de confiança entre o Fisco e o contribuinte \cite{schwartzEnhancingMLModels2025}.
+\end{itemize}
+
+Configura-se, portanto, a necessidade estratégica de validar metodologias que mantenham a performance do XGBoost, contribuindo para uma alocação mais eficiente dos esforços de cobrança, mas adicionem a transparência necessária para a segurança jurídica.
+
+\section{Pergunta de Pesquisa}
+Diante do exposto, e considerando duas das técnicas de XAI mais utilizadas na literatura, SHAP e LIME (apresentadas na Seção \ref{sec:justificativa}), formula-se a seguinte questão de pesquisa:
+\begin{quote}
+\textit{De que forma as técnicas SHAP e LIME diferem quanto à consistência, à estabilidade e à utilidade prática na explicação local das classificações produzidas pelo modelo de Rating da Dívida Ativa da SEFAZ-DF?}
+\end{quote}
+
+\section{Justificativa}
+\label{sec:justificativa}
+
+Embora o modelo atual da SEFAZ-DF forneça ferramentas estatísticas de importância global das variáveis, a atuação do auditor fiscal exige um nível de granularidade maior. Para garantir uma auditoria robusta e fundamentar a defesa administrativa, é essencial compreender a contribuição marginal de cada variável explicativa na predição específica de um contribuinte (a explicação local), e não apenas o comportamento médio do modelo.
+
+A Inteligência Artificial Explicável, ou XAI (\textit{Explainable Artificial Intelligence}), corresponde ao conjunto de métodos voltados a tornar compreensíveis as decisões produzidas por modelos de aprendizado de máquina.
+
+Para endereçar essa lacuna, este trabalho foca na aplicação e comparação de dois métodos consagrados dessa abordagem:
+\begin{itemize}
+\item \textbf{SHAP (\textit{Shapley Additive exPlanations}):} Fundamentado na Teoria dos Jogos Cooperativos, é frequentemente apontado na literatura como uma abordagem robusta para auditorias, devido à sua consistência matemática e às propriedades axiomáticas de distribuição de valor \cite{molnarInterpretableMachineLearning}.
+\item \textbf{LIME (\textit{Local Interpretable Model-agnostic Explanations}):} Foca na aproximação local por modelos simples, oferecendo explicações rápidas e intuitivas, valiosas para a comunicação com partes interessadas não técnicas \cite{maratheDemystifyingInterpretableAI}.
+\end{itemize}
+
+\section{Objetivos}
+
+\textbf{Objetivo Geral:}
+Analisar a aplicação das técnicas SHAP e LIME sobre o modelo de \textit{Gradient Boosting} utilizado no Rating da Dívida Ativa da SEFAZ-DF, comparando-as quanto à consistência, à estabilidade e à utilidade prática na geração de explicações locais, de modo a fundamentar uma estrutura visual de apoio à auditoria fiscal.
+
+\textbf{Objetivos Específicos:}
+\begin{enumerate}
+\item Reproduzir a lógica operacional do modelo de Rating da SEFAZ-DF, incluindo o pré-processamento, o \textit{ensemble} de produção e as regras de pós-processamento utilizadas na classificação das DAs.
+\item Utilizar bases sintéticas como suporte à explicabilidade do modelo, preservando a estrutura analítica necessária à interpretação sem depender da exposição de dados reais.
+\item Implementar e comparar experimentalmente os algoritmos SHAP e LIME na geração de explicações locais para as classes de Rating A, B, C e D, avaliando concordância, estabilidade e adequação prática ao contexto de auditoria fiscal.
+\item Identificar as variáveis explicativas mais relevantes do modelo em nível global e local, destacando os fatores recorrentes nas decisões do \textit{ensemble}.
+\item Consolidar uma estrutura visual baseada em gráficos de importância, \textit{waterfall plots}, \textit{decision plots} e resumos tabulares, com potencial de apoiar a fundamentação administrativa do lançamento tributário.
+\end{enumerate}
+
+\section{Organização da Monografia}
+
+Esta monografia está estruturada em cinco capítulos. O Capítulo \ref{cap:introducao} apresenta o contexto do problema, a questão de pesquisa, a justificativa do trabalho e os objetivos. O Capítulo \ref{cap:referencial_teorico} reúne o arcabouço conceitual que sustenta a análise tributária baseada em dados, a modelagem preditiva por \textit{ensemble} e as técnicas de Inteligência Artificial Explicável empregadas no estudo. O Capítulo \ref{cap:metodologia} descreve a estratégia metodológica adotada, incluindo a reconstrução da lógica do modelo de produção, o uso de bases sintéticas e os procedimentos de explicabilidade. O Capítulo \ref{cap:resultados_analise} apresenta os resultados experimentais e a análise comparativa entre SHAP e LIME. Por fim, o Capítulo \ref{cap:conclusao} sintetiza os principais achados, discute as contribuições do trabalho e explicita suas limitações.

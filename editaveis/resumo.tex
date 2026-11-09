@@ -1,0 +1,19 @@
+\begin{resumo}
+ % O resumo deve ressaltar o objetivo, o método, os resultados e as conclusões 
+ % do documento. A ordem e a extensão
+ % destes itens dependem do tipo de resumo (informativo ou indicativo) e do
+ % tratamento que cada item recebe no documento original. O resumo deve ser
+ % precedido da referência do documento, com exceção do resumo inserido no
+ % próprio documento. (\ldots) As palavras-chave devem figurar logo abaixo do
+ % resumo, antecedidas da expressão Palavras-chave:, separadas entre si por
+ % ponto e finalizadas também por ponto. O texto pode conter no mínimo 150 e 
+ % no máximo 500 palavras, é aconselhável que sejam utilizadas 200 palavras. 
+ % E não se separa o texto do resumo em parágrafos.
+
+ A gestão fiscal no setor público tem incorporado técnicas de análise tributária baseada em dados (\textit{Tax Analytics}) para apoiar a classificação e a recuperação de créditos inscritos em Dívida Ativa, aproximando esse processo das práticas de pontuação de crédito (\textit{Credit Scoring}). No Distrito Federal, a Secretaria de Economia (SEFAZ-DF) utiliza modelos de aprendizado de máquina baseados em \textit{Gradient Boosting} para realizar o \textit{rating} de recuperabilidade dos créditos tributários. Embora esses modelos apresentem boa performance, sua natureza de caixa-preta dificulta a interpretação da lógica de decisão, gerando tensões com a transparência administrativa e com a Lei Geral de Proteção de Dados (LGPD). Este trabalho analisou a aplicação das técnicas SHAP e LIME sobre o modelo de \textit{rating} da SEFAZ-DF, com o objetivo de comparar sua consistência, sua estabilidade e sua utilidade prática no contexto da auditoria fiscal. A metodologia concentrou-se na reprodução da lógica do modelo de produção, incluindo pré-processamento, \textit{target encoding}, \textit{ensemble} de três modelos XGBoost por imposto e regras de pós-processamento, utilizando bases sintéticas como suporte à camada explicativa. Os resultados mostraram que o SHAP forneceu explicações globais e locais mais consistentes para sustentar a interpretação do modelo, enquanto o LIME se revelou útil como ferramenta complementar de inspeção local, porém com maior variabilidade entre execuções e cenários. Um experimento com um modelo substituto mostrou ainda que, quando o histórico de treinamento sub-registra os pagamentos de um subgrupo de contribuintes, o modelo passa a discriminar esse grupo sem perda perceptível de performance média, e que o SHAP evidencia esse viés. Conclui-se que a explicação do modelo real de produção, mesmo conduzida exclusivamente com dados sintéticos, preserva utilidade analítica suficiente para apoiar estruturas de auditoria fiscal mais transparentes e auditáveis.
+
+ \vspace{\onelineskip}
+    
+ \noindent
+ \textbf{Palavras-chave}: Inteligência Artificial Explicável. Gestão Fiscal. Dívida Ativa. XGBoost. Auditoria Fiscal.
+\end{resumo}

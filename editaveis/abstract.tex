@@ -1,0 +1,10 @@
+\begin{resumo}[Abstract]
+ \begin{otherlanguage*}{english}
+   Fiscal management in the public sector has incorporated data-driven tax analysis techniques (\textit{Tax Analytics}) to support the classification and recovery of tax credits registered as active debt, bringing this process closer to credit scoring practices. In the Federal District, the Secretariat of Economy (SEFAZ-DF) uses machine learning models based on \textit{Gradient Boosting} to perform the recoverability rating of tax credits. Although these models offer strong predictive performance, their black-box nature hinders the interpretation of decision logic, creating tensions with administrative transparency and the General Data Protection Law (LGPD). This study analyzed the application of SHAP and LIME to the SEFAZ-DF rating model in order to compare their consistency, stability, and practical usefulness in the context of tax auditing. The methodology focused on reproducing the logic of the production model, including preprocessing, target encoding, a three-model XGBoost ensemble for each tax setup, and post-processing rules, while relying on synthetic datasets to support the explanatory layer. The results showed that SHAP provided more consistent global and local explanations for interpreting the model, whereas LIME proved useful as a complementary local inspection tool, though with greater variability across runs and scenarios. An experiment with a surrogate model further showed that, when the training history under-records payments from a subgroup of taxpayers, the model starts to discriminate against that group with no noticeable loss of average performance, and that SHAP exposes this bias. It is concluded that explaining the real production model, even when carried out exclusively with synthetic data, preserves enough analytical usefulness to support more transparent and auditable tax auditing structures.
+
+   \vspace{\onelineskip}
+ 
+   \noindent 
+   \textbf{Keywords}: Explainable Artificial Intelligence. Fiscal Management. Active Debt. XGBoost. Tax Auditing.
+ \end{otherlanguage*}
+\end{resumo}

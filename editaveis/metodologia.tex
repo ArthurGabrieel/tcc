@@ -1,0 +1,225 @@
+\chapter{Metodologia}
+\label{cap:metodologia}
+
+Este capítulo descreve como a pesquisa foi conduzida para explicar o modelo de Rating da Dívida Ativa da SEFAZ-DF por meio de técnicas de Inteligência Artificial Explicável (XAI). A abordagem é quantitativa e experimental: o modelo efetivamente utilizado em produção foi tomado como objeto de estudo, sem retreinamento, e sobre ele foram aplicadas as técnicas SHAP e LIME. Como os dados reais dos contribuintes são protegidos por sigilo fiscal e pela Lei Geral de Proteção de Dados (LGPD), todas as entradas submetidas ao modelo e às técnicas de explicação foram geradas sinteticamente, conforme detalhado na Seção \ref{sec:dados_sinteticos}.
+
+\section{Delineamento da Pesquisa}
+
+A execução do trabalho foi organizada em seis etapas sequenciais:
+
+\begin{enumerate}
+    \item \textbf{Reprodução do pipeline de produção:} reconstrução, fora do ambiente institucional, da cadeia completa que transforma os dados de uma Certidão de Dívida Ativa (CDA) em um \textit{rating}, incluindo pré-processamento, \textit{target encoding}, \textit{ensemble} de modelos e regras de pós-processamento.
+    \item \textbf{Geração e validação de dados sintéticos:} treinamento de sintetizadores sobre a base histórica de cada imposto, comparação de quatro estratégias de síntese e escolha da mais fiel à distribuição real.
+    \item \textbf{Aplicação das técnicas de explicabilidade:} cálculo de explicações globais e locais com SHAP e de explicações locais com LIME sobre o \textit{ensemble} de produção.
+    \item \textbf{Comparação entre SHAP e LIME:} medição da concordância entre os dois métodos e da estabilidade do LIME em execuções repetidas.
+    \item \textbf{Experimento de desbalanceamento:} treinamento controlado de um modelo substituto sob diferentes níveis de desbalanceamento micro, para medir o efeito sobre a performance do modelo e sobre as métricas de viés.
+    \item \textbf{Consolidação da estrutura visual de apoio:} organização dos resultados em gráficos e tabelas voltados ao auditor fiscal.
+\end{enumerate}
+
+\section{Objeto de Estudo: o Modelo de Rating em Produção}
+\label{sec:modelo_producao}
+
+O Rating da SEFAZ-DF é calculado separadamente para cinco grupos de tributos, denominados neste trabalho \textit{setups}: ICMS, ISS, IPVA, IPTU e Taxas. Para cada \textit{setup}, a Secretaria mantém um \textit{ensemble} de três modelos XGBoost, treinados por validação cruzada em \textit{k} partições (\textit{K-Fold}) sobre o histórico real de pagamentos. Esses modelos foram utilizados exatamente como estão em produção: nenhum deles foi retreinado ou ajustado nesta pesquisa.
+
+A classificação de uma CDA segue quatro passos, todos reproduzidos fielmente:
+
+\begin{enumerate}
+    \item \textbf{Pré-processamento:} conversão de tipos, derivação de colunas auxiliares e substituição de variáveis categóricas pelo seu \textit{target encoding}, isto é, pela taxa histórica de pagamento associada a cada categoria, suavizada em direção à taxa média geral quando a categoria tem poucas ocorrências. As tabelas de codificação foram carregadas dos mesmos arquivos usados em produção.
+    \item \textbf{Predição do \textit{ensemble}:} cada um dos três modelos estima a probabilidade de pagamento da CDA, e a predição final é a média aritmética das três probabilidades.
+    \item \textbf{Normalização:} a probabilidade média $p$ é reescalada para o intervalo $[0,1]$ pela normalização \textit{min-max} com os limites operacionais de cada \textit{setup}, $\tilde{p} = (p - p_{\min}) / (p_{\max} - p_{\min})$, e limitada ao intervalo $[0{,}0001;\ 0{,}9999]$.
+    \item \textbf{Atribuição do \textit{rating}:} a probabilidade normalizada é convertida em classe pelas faixas da Tabela \ref{tab:faixas_rating}. Há ainda uma regra de negócio que se sobrepõe ao modelo: CDAs parceladas ou com exigibilidade suspensa, identificadas pela variável \texttt{situacao\_inicial}, recebem \textit{rating} A independentemente da probabilidade estimada.
+\end{enumerate}
+
+\begin{table}[H]
+    \centering
+    \caption[Faixas de probabilidade que definem cada classe de \textit{rating}]{Faixas de probabilidade normalizada de pagamento que definem cada classe do Rating da Dívida Ativa da SEFAZ-DF. A probabilidade é a média das saídas dos três modelos XGBoost do \textit{setup}, reescalada pela normalização \textit{min-max}. O limite inferior de cada faixa é inclusivo. A classe A também é atribuída, sem consulta ao modelo, às CDAs parceladas ou suspensas.}
+    \label{tab:faixas_rating}
+    \small
+    \begin{tabular}{ccl}
+        \toprule
+        \textbf{\textit{Rating}} & \textbf{Probabilidade normalizada} & \textbf{Interpretação} \\
+        \midrule
+        A & $0{,}50 \le \tilde{p} \le 1{,}00$ & Alta expectativa de recuperação \\
+        B & $0{,}25 \le \tilde{p} < 0{,}50$ & Recuperação moderada \\
+        C & $0{,}03 \le \tilde{p} < 0{,}25$ & Baixa expectativa de recuperação \\
+        D & $0{,}00 \le \tilde{p} < 0{,}03$ & Recuperação muito improvável \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Os gráficos e tabelas do Capítulo \ref{cap:resultados_analise} identificam as variáveis do modelo por nomes descritivos, e não pelos nomes técnicos das colunas. A Tabela \ref{tab:glossario_variaveis} faz a correspondência entre os dois e explica o que cada variável mede.
+
+\begin{table}[H]
+    \centering
+    \caption[Variáveis do modelo citadas nos resultados]{Variáveis do modelo de \textit{rating} citadas nas figuras e tabelas dos resultados. A primeira coluna é o nome usado nos gráficos; a segunda, o nome da coluna no modelo de produção; a terceira, o que a variável mede. ``Devedor'' designa o núcleo do contribuinte, identificador que agrupa as CDAs vinculadas a um mesmo CPF ou CNPJ.}
+    \label{tab:glossario_variaveis}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.9cm} >{\raggedright\arraybackslash}p{3.9cm} >{\raggedright\arraybackslash}p{6.3cm}}
+        \toprule
+        \textbf{Nome nos gráficos} & \textbf{Coluna no modelo} & \textbf{O que mede} \\
+        \midrule
+        Dívidas em aberto do devedor & \texttt{div\_abertas\_nucleo} & Número de CDAs ainda em aberto vinculadas ao mesmo devedor. \\
+        Dívida total do CPF/CNPJ & \texttt{val\_div\_cpfcnpj} & Soma dos valores corrigidos das dívidas inscritas no mesmo CPF ou CNPJ, em reais. \\
+        Histórico de regularização do devedor & \texttt{hist\_reg\_total\_nucleo} & Proporção das demais dívidas do devedor que foram pagas ou parceladas. \\
+        Regularização do devedor em 5 anos & \texttt{hist\_reg\_nucleo\_5a} & A mesma proporção, considerando apenas dívidas inscritas nos últimos cinco anos. \\
+        Anos sem movimentação da dívida & \texttt{tempo\_inativo} & Anos desde a última mudança de situação da CDA. \\
+        Ano do fato gerador & \texttt{ano\_declaracao} & Ano-exercício da declaração ou do fato que originou a dívida. \\
+        Empresa com cadastro ativo & \texttt{se\_ativo} & Se a inscrição do contribuinte está ativa no cadastro fiscal. \\
+        Situação atual da CDA & \texttt{situacao\_inicial} & Situação da CDA na data de referência (em aberto, parcelada, suspensa etc.). \\
+        Multa em proporção da dívida & \texttt{val\_multa} & Valor da multa dividido pelo valor da dívida. \\
+        Valor corrigido da dívida & \texttt{val\_div\_corr} & Valor da CDA atualizado monetariamente, em reais. \\
+        Idade da dívida & \texttt{idade\_divida\_meses} & Meses desde a inscrição em dívida ativa. \\
+        Pessoa jurídica & \texttt{se\_cnpj} & Se o contribuinte é identificado por CNPJ (usada no experimento do IPTU). \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Dados Sintéticos}
+\label{sec:dados_sinteticos}
+
+\subsection{Motivação}
+
+Os dados que alimentam o Rating contêm informações protegidas pelo sigilo fiscal e dados pessoais dos contribuintes. A anonimização convencional dessas bases é juridicamente arriscada, pois combinações de atributos aparentemente inofensivos (bairro, valor da dívida, idade do veículo) podem permitir a reidentificação de pessoas. Optou-se, por isso, por dados sintéticos: registros artificiais amostrados de uma distribuição estatística aprendida a partir da base real. Nenhuma linha sintética é cópia de um registro real, mas o conjunto procura preservar as distribuições de cada variável e as dependências entre elas \cite{patkiSyntheticDataVault2016}.
+
+Os dados reais foram usados em apenas dois momentos: para ajustar os sintetizadores e para medir a fidelidade dos dados gerados. Eles não foram submetidos ao modelo nem às técnicas de explicação. Os dados sintéticos servem aqui como entradas plausíveis para o modelo de produção. A variável de pagamento gerada pelo sintetizador não reproduz com fidelidade a relação entre as características da CDA e o pagamento observado e, por isso, não foi tratada como verdade. As explicações descrevem, portanto, como o modelo real decide diante de casos verossímeis; elas não descrevem o comportamento real dos contribuintes.
+
+\subsection{Algoritmos de Síntese Avaliados}
+
+Foram avaliados três algoritmos da biblioteca \textit{Synthetic Data Vault} (SDV) \cite{patkiSyntheticDataVault2016}, que representam as três famílias mais usadas para dados tabulares:
+
+\begin{itemize}
+    \item \textbf{Cópula Gaussiana (\textit{GaussianCopula}):} método estatístico baseado no teorema de Sklar, segundo o qual qualquer distribuição conjunta $F$ de $d$ variáveis pode ser decomposta em suas distribuições marginais $F_1, \dots, F_d$ e em uma função cópula $C$ que descreve apenas a dependência entre elas \cite{sklar1959fonctions}:
+    \begin{equation}
+        F(x_1, \dots, x_d) = C\big(F_1(x_1), \dots, F_d(x_d)\big)
+    \end{equation}
+    Na cópula gaussiana, essa dependência é representada por uma matriz de correlação $\Sigma$ de uma distribuição normal multivariada. O ajuste ocorre em três passos: (i) estima-se a distribuição marginal $F_j$ de cada coluna; (ii) cada valor é levado ao espaço normal padrão por $z_j = \Phi^{-1}(F_j(x_j))$, em que $\Phi$ é a função de distribuição acumulada da normal padrão; (iii) estima-se a matriz $\Sigma$ entre as colunas transformadas. Para gerar um registro novo, sorteia-se um vetor $z \sim \mathcal{N}(0, \Sigma)$ e aplica-se a transformação inversa $x_j = F_j^{-1}(\Phi(z_j))$ em cada coluna. Variáveis categóricas são previamente convertidas em valores numéricos pelo próprio SDV.
+    \item \textbf{CTGAN (\textit{Conditional Tabular GAN}):} rede adversarial generativa adaptada a tabelas, na qual um gerador produz registros e um discriminador tenta distingui-los dos reais. O CTGAN acrescenta normalização específica por modo para colunas contínuas multimodais e amostragem condicionada às categorias, o que melhora a representação de categorias raras \cite{xuModelingTabularData2019}.
+    \item \textbf{TVAE (\textit{Tabular Variational Autoencoder}):} autocodificador variacional que comprime cada registro em um espaço latente de baixa dimensão e aprende a reconstruí-lo; novos registros são gerados decodificando pontos sorteados nesse espaço \cite{xuModelingTabularData2019}.
+\end{itemize}
+
+\subsection{Transformação Logarítmica das Variáveis Monetárias}
+
+As variáveis monetárias (valor corrigido da dívida, multa, dívida total do CPF ou CNPJ, valor de aquisição do veículo, valor do terreno, valor do metro quadrado construído e base de cálculo do IPTU) têm distribuição fortemente assimétrica: a maioria das dívidas é pequena, e poucas atingem valores muito altos. Nessas condições, os sintetizadores tendem a gerar valores típicos muito acima dos reais. Para contornar o problema, aplicou-se a transformação $x' = \ln(1 + x)$ a essas colunas antes do ajuste, e a transformação inversa $x = e^{x'} - 1$ após a amostragem. Valores negativos, quando existentes, foram truncados em zero antes da transformação. As estratégias que usam esse recurso recebem o sufixo ``+log''.
+
+\subsection{Procedimento de Geração}
+
+Para cada \textit{setup}, a geração seguiu os passos abaixo:
+
+\begin{enumerate}
+    \item Extração da base histórica do imposto a partir do ambiente de produção.
+    \item Remoção das colunas identificadoras e sensíveis: CPF/CNPJ, núcleo do contribuinte, inscrição no Cadastro Fiscal do DF, placa do veículo, número do imóvel e data de nascimento.
+    \item Conversão da variável-alvo de pagamento (\texttt{pagamento\_adotado}) para o formato binário (pagou ou não pagou).
+    \item Aplicação da transformação logarítmica às variáveis monetárias presentes no \textit{setup}.
+    \item Declaração explícita das variáveis categóricas, para que o sintetizador as trate como categorias e não como números.
+    \item Ajuste do sintetizador e amostragem de 50.000 registros, com semente aleatória fixa (42) para garantir reprodutibilidade.
+    \item Aplicação da transformação logarítmica inversa e nova binarização da variável-alvo.
+    \item No IPVA, regeneração da data de nascimento a partir da idade sintética, pois essa coluna é exigida pelo pré-processamento de produção mas havia sido removida no passo 2.
+    \item Atribuição de um identificador de CDA aleatório e único entre todos os \textit{setups}, sem relação com números de CDA reais.
+\end{enumerate}
+
+\subsection{Validação da Fidelidade e Escolha do Sintetizador}
+
+As quatro estratégias (\textit{GaussianCopula}, \textit{GaussianCopula}+log, TVAE+log e CTGAN+log) foram comparadas com a base real segundo três critérios:
+
+\begin{itemize}
+    \item \textbf{Erro relativo da mediana} das variáveis monetárias, $|\mathrm{med}_{\text{sint}} - \mathrm{med}_{\text{real}}| / \mathrm{med}_{\text{real}}$, que indica se o valor típico da dívida foi preservado.
+    \item \textbf{Distância de variação total} (TVD, do inglês \textit{Total Variation Distance}) das variáveis categóricas, que mede a diferença entre a proporção de cada categoria na base real ($P$) e na sintética ($Q$). Varia de 0 (distribuições idênticas) a 1 (distribuições sem sobreposição):
+    \begin{equation}
+        \mathrm{TVD}(P, Q) = \frac{1}{2} \sum_{c} \left| P(c) - Q(c) \right|
+    \end{equation}
+    \item \textbf{Diferença na proporção de valores ausentes}, em pontos percentuais, por coluna.
+\end{itemize}
+
+A Tabela \ref{tab:comparacao_sintetizadores} resume os resultados.
+
+\begin{table}[H]
+    \centering
+    \caption[Fidelidade dos quatro sintetizadores em relação à base real]{Fidelidade dos quatro sintetizadores avaliados em relação à base real, agregada sobre os \textit{setups} em que cada um foi executado. Em todas as colunas, valores menores indicam dados sintéticos mais próximos dos reais. O erro da mediana considera as combinações de \textit{setup} e variável monetária disponíveis (14 para as três primeiras estratégias e 3 para o CTGAN+log); a TVD considera as variáveis categóricas comparáveis, excluída a data de nascimento do IPVA. O CTGAN+log foi executado apenas em ISS e Taxas. A estratégia escolhida, \textit{GaussianCopula}+log, aparece em negrito.}
+    \label{tab:comparacao_sintetizadores}
+    \small
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Sintetizador} & \textbf{\textit{Setups}} & \textbf{Erro da} & \textbf{TVD} & \textbf{Ausentes} \\
+         & & \textbf{mediana} & \textbf{categórica} & \textbf{(p.p.)} \\
+         & & \textbf{(mediana / máx.)} & \textbf{(mediana)} & \textbf{(média)} \\
+        \midrule
+        \textit{GaussianCopula}           & 5 & 1,255 / 32,584 & 0,005 & 0,08 \\
+        \textbf{\textit{GaussianCopula}+log} & \textbf{5} & \textbf{0,135 / 0,930} & \textbf{0,006} & \textbf{0,06} \\
+        TVAE+log                          & 5 & 0,113 / 0,905 & 0,103 & 0,48 \\
+        CTGAN+log                         & 2 & 0,154 / 0,196 & 0,216 & 0,64 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Sem a transformação logarítmica, a cópula gaussiana errou a mediana das variáveis monetárias em 125\% no caso típico e em mais de 3.000\% no pior caso (multa do ICMS); com ela, o erro típico caiu para 13,5\%. O TVAE+log obteve erro de mediana ligeiramente menor, mas distorceu as variáveis categóricas (TVD mediana 17 vezes maior) e a proporção de valores ausentes. O CTGAN+log, avaliado apenas em ISS e Taxas, apresentou a maior distorção categórica e a maior diferença na proporção de valores ausentes. A \textit{GaussianCopula}+log foi escolhida por oferecer o melhor equilíbrio entre os três critérios.
+
+Dois pontos de baixa fidelidade foram identificados e são considerados nas limitações do trabalho. Primeiro, a data de nascimento do IPVA apresenta TVD próxima de 1 em todas as estratégias, o que é esperado, pois a coluna foi regenerada a partir da idade (passo 8) e a TVD não é uma métrica adequada para datas com centenas de valores distintos. Segundo, a variável \texttt{situacao\_inicial} do \textit{setup} Taxas apresentou TVD de 0,87 na estratégia escolhida, o que indica que a proporção de CDAs parceladas ou suspensas nesse imposto não foi bem preservada; como essa variável aciona a regra de \textit{rating} A forçado, a distribuição de \textit{ratings} das Taxas deve ser lida com cautela.
+
+\section{Procedimentos de Explicabilidade}
+\label{sec:procedimentos_xai}
+
+\subsection{Explicações com SHAP}
+
+Os valores SHAP foram calculados com o \textit{TreeExplainer}, que obtém os valores de Shapley exatos para modelos de árvore \cite{lundbergUnifiedApproachInterpreting2017}. Como a biblioteca não explica um \textit{ensemble} de modelos diretamente, o cálculo foi feito separadamente em cada um dos três modelos XGBoost do \textit{setup}, e os três vetores de contribuições foram combinados pela média aritmética, de forma análoga à combinação das predições. Os valores são expressos na escala interna do XGBoost (logaritmo da razão de chances de pagamento), na qual as contribuições são aditivas.
+
+A partir desses valores foram produzidos: (i) a importância global de cada variável, dada pela média do valor absoluto de SHAP sobre a amostra; (ii) o desvio padrão e o coeficiente de variação dessa importância entre os três modelos, para avaliar a coerência interna do \textit{ensemble}; e (iii) explicações locais na forma de \textit{waterfall plots} e \textit{decision plots}.
+
+\subsection{Explicações com LIME}
+
+As explicações LIME foram geradas com o \textit{LimeTabularExplainer}, tendo como função a ser explicada a cadeia completa de predição do \textit{ensemble}, incluindo a normalização. Para cada explicação, o LIME gerou 1.000 perturbações em torno da CDA analisada e ajustou um modelo linear local com até 12 variáveis, mantendo as variáveis contínuas sem discretização. A distribuição usada para gerar as perturbações foi a própria amostra sintética do \textit{setup}.
+
+\subsection{Seleção dos Casos Analisados}
+
+As análises globais com SHAP usaram as 50.000 CDAs sintéticas de cada \textit{setup}. Para a comparação local entre SHAP e LIME, sorteou-se uma amostra de 5.000 CDAs sintéticas por \textit{setup} (semente 42) e, nela, selecionou-se uma CDA representativa de cada classe de \textit{rating}: aquela cuja probabilidade normalizada é a mais próxima da mediana das probabilidades do grupo. O critério evita casos extremos ou atípicos e resultou em 20 casos (cinco \textit{setups} $\times$ quatro classes). Na classe A, o grupo inclui tanto CDAs classificadas pelo modelo quanto CDAs que receberam A pela regra de parcelamento ou suspensão, de modo que o caso escolhido pode ter probabilidade abaixo de 0,50.
+
+\subsection{Métricas de Comparação}
+
+Para cada caso, compararam-se as cinco variáveis mais relevantes segundo cada método (\textit{top-5}), ordenadas pelo valor absoluto da contribuição. Foram utilizadas três medidas:
+
+\begin{itemize}
+    \item \textbf{\textit{Jaccard}@5:} proporção de variáveis em comum entre os dois \textit{top-5}, sem considerar a ordem. Varia de 0 (nenhuma variável em comum) a 1 (mesmo conjunto):
+    \begin{equation}
+        J@5(S, L) = \frac{|S_5 \cap L_5|}{|S_5 \cup L_5|}
+    \end{equation}
+    em que $S_5$ e $L_5$ são os conjuntos das cinco variáveis principais do SHAP e do LIME.
+    \item \textbf{\textit{Rank-Biased Overlap} (RBO@5):} medida de concordância entre listas ordenadas que dá mais peso às primeiras posições \cite{webberSimilarityMeasureIndefinite2010}. Foi utilizada a forma truncada, sem extrapolação, com parâmetro de persistência $p = 0{,}9$:
+    \begin{equation}
+        RBO@5 = (1 - p) \sum_{d=1}^{5} p^{\,d-1} \frac{|S_{1:d} \cap L_{1:d}|}{d}
+    \end{equation}
+    em que $S_{1:d}$ e $L_{1:d}$ são as $d$ primeiras variáveis de cada lista. Nessa forma truncada, o valor máximo, obtido quando as duas listas são idênticas, é $0{,}4095$, e não 1. Os valores de RBO@5 reportados no Capítulo \ref{cap:resultados_analise} devem ser lidos em relação a esse teto.
+    \item \textbf{Estabilidade do LIME:} cada caso foi explicado 30 vezes pelo LIME, variando apenas a semente aleatória (de 42 a 71). Calculou-se o \textit{Jaccard}@5 entre todos os 435 pares de execuções e tomou-se a média. Registraram-se também o número de variáveis distintas que apareceram no \textit{top-5} ao longo das 30 execuções e a frequência da variável mais recorrente.
+\end{itemize}
+
+O SHAP não foi submetido ao teste de estabilidade porque o \textit{TreeExplainer} é determinístico: a mesma CDA produz sempre a mesma explicação.
+
+\section{Experimento de Desbalanceamento Micro}
+\label{sec:experimento_desbalanceamento}
+
+Para observar na prática os efeitos descritos na Seção \ref{subsec:desbalanceamento}, foi conduzido um experimento controlado em que o desbalanceamento de um subgrupo é forçado no conjunto de treinamento e seus efeitos são medidos em um conjunto de teste inalterado.
+
+O modelo de produção não pode ser usado para esse fim, pois retreiná-lo exigiria os dados reais. Por isso, o experimento utiliza um \textbf{modelo substituto}: um XGBoost treinado sobre as 50.000 CDAs sintéticas do IPTU, com a variável de pagamento sintética como alvo e com as mesmas variáveis e o mesmo pré-processamento do modelo de produção. Para viabilizar dezenas de treinamentos, o substituto usa uma configuração mais leve que a de produção (300 árvores de profundidade máxima 6, taxa de aprendizado 0,05). Sem nenhuma manipulação, ele atinge AUC de 0,78 no conjunto de teste, o que indica sinal suficiente nos dados sintéticos para que efeitos de desbalanceamento sejam distinguíveis do ruído. Os resultados descrevem, portanto, o comportamento de um modelo treinado em dados sintéticos, e não permitem conclusões sobre a equidade do modelo de produção.
+
+O subgrupo escolhido foi o de contribuintes pessoa jurídica (PJ), identificados pela variável \texttt{se\_cnpj}, comparados aos contribuintes pessoa física (PF). Na base sintética do IPTU, as CDAs de PJ são 12,3\% do total e têm taxa de pagamento de 20,6\%, contra 17,8\% das CDAs de PF. A variável \texttt{se\_cnpj} foi mantida entre as entradas do modelo, como ocorre em produção.
+
+A base foi dividida em treino (70\%) e teste (30\%), de forma estratificada por grupo e por pagamento. O conjunto de teste permaneceu fixo e com as proporções naturais em todos os cenários. No treino, foram aplicadas duas manipulações:
+
+\begin{itemize}
+    \item \textbf{Variante 1, sub-representação do grupo:} mantém-se apenas uma fração das CDAs de PJ, pagas ou não. O grupo fica menor, mas sua taxa de pagamento é preservada.
+    \item \textbf{Variante 2, sub-representação dos pagadores do grupo:} mantém-se apenas uma fração das CDAs de PJ que foram pagas, preservando todas as não pagas. O grupo passa a parecer, no treino, pior pagador do que de fato é. Essa situação reproduz o que ocorre quando o histórico registra menos pagamentos de um grupo, por exemplo porque ele foi menos cobrado, como no ciclo de retroalimentação descrito no Capítulo \ref{cap:referencial_teorico}.
+\end{itemize}
+
+Cada variante foi testada com frações mantidas de 100\%, 50\%, 25\%, 10\% e 5\%, e cada cenário foi treinado cinco vezes com sementes diferentes. Em cada treinamento foram medidos, no conjunto de teste: a AUC geral e por grupo; a taxa de decisão favorável por grupo, definida como probabilidade estimada igual ou superior a 0,25 (faixas A ou B da Tabela \ref{tab:faixas_rating}), com limiar fixo em todos os cenários; as métricas de viés SPD, EOD e DI, calculadas como PF em relação a PJ; e o valor SHAP médio da variável \texttt{se\_cnpj} nas CDAs de PJ, que mostra quanto o modelo passou a usar o próprio tipo de contribuinte para decidir.
+
+\section{Ferramentas Utilizadas}
+
+O trabalho foi implementado em Python. A síntese de dados utilizou a biblioteca SDV; a manipulação dos dados, as bibliotecas \textit{pandas} e \textit{NumPy}; os modelos de produção foram carregados com \textit{XGBoost} e \textit{joblib}; e as explicações foram geradas com as bibliotecas \textit{shap} e \textit{lime}. As análises foram organizadas em \textit{notebooks} Jupyter, e a estrutura visual de apoio ao auditor foi disponibilizada em uma aplicação web que apresenta, para cada CDA sintética, o \textit{rating}, a probabilidade e a explicação SHAP correspondente.
+
+%\section{Cronograma de Execução}
+
+%O trabalho foi desenvolvido em dois ciclos. O TCC1, de setembro a dezembro de 2025, foi dedicado ao planejamento, à revisão bibliográfica e à elaboração do projeto. O TCC2, ao longo de 2026, concentrou a execução técnica, a análise dos resultados e a escrita da monografia, com defesa prevista para dezembro de 2026. A Tabela \ref{tab:cronograma} apresenta as etapas e os meses em que cada uma ocorreu.
+
+%Em relação ao planejamento feito no TCC1, a execução foi reorganizada em três pontos: a base real da SEFAZ-DF deu lugar a dados sintéticos, pelas restrições de sigilo descritas na Seção \ref{sec:dados_sinteticos}; os modelos de controle previstos (Regressão Logística e EBM) não foram implementados, pois o trabalho passou a explicar o modelo de produção em vez de compará-lo com alternativas; e o experimento de desbalanceamento foi incluído a pedido do orientador.
+
+%\input{editaveis/cronograma}
+

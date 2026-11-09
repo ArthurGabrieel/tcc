@@ -1,0 +1,23 @@
+# Arquivos gerados pela compilação LaTeX
+*.aux
+*.bbl
+*.blg
+*.brf
+*.idx
+*.ilg
+*.ind
+*.lof
+*.lot
+*.log
+*.out
+*.toc
+*.dvi
+*.ps
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*-eps-converted-to.pdf
+tcc.pdf
+TCC_FGA.pdf
+
+.DS_Store

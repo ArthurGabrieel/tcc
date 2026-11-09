@@ -1,0 +1,48 @@
+% Figura da introdução: cenário de aplicação do Rating, da coleta dos dados à explicação para o auditor.
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        font=\footnotesize,
+        caixa/.style={draw, rounded corners=2pt, align=center, fill=gray!8, minimum height=1.05cm, inner sep=4pt,
+                     execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000}},
+        fonte/.style={caixa, text width=3.6cm, fill=white},
+        passo/.style={caixa, text width=3.4cm},
+        saida/.style={caixa, text width=2.3cm, fill=gray!25, font=\footnotesize\bfseries},
+        xai/.style={caixa, text width=6.6cm, draw=black, dashed, thick, fill=white},
+        seta/.style={-{Stealth[length=2.2mm]}, thick},
+        etapa/.style={font=\scriptsize\bfseries\scshape, anchor=west, text=gray!70!black}
+    ]
+        % 1. Coleta
+        \node[etapa] at (0.05, 1.05) {1. Coleta};
+        \node[fonte] (debito) at (2.0, 0) {\textbf{Dados do débito}\\valor, multa, situação e idade da CDA};
+        \node[fonte] (devedor) at (6.2, 0) {\textbf{Perfil do devedor}\\cadastro, CPF/CNPJ e histórico de pagamentos};
+        \node[fonte] (objeto) at (10.4, 0) {\textbf{Características do objeto}\\imóvel, veículo ou atividade tributada};
+        \node[caixa, text width=11.9cm] (extracao) at (6.2, -1.95) {\textbf{Extração e consolidação}: dados reunidos a partir dos sistemas da SEFAZ-DF em uma base histórica para cada imposto (ICMS, ISS, IPVA, IPTU e Taxas)};
+        \draw[seta] (debito) -- (debito |- extracao.north);
+        \draw[seta] (devedor) -- (devedor |- extracao.north);
+        \draw[seta] (objeto) -- (objeto |- extracao.north);
+
+        % 2. Processamento e classificação
+        \node[etapa] at (2.0, -3.15) {2. Processamento e classificação};
+        \node[passo] (pre) at (1.85, -4.6) {\textbf{Pré-processamento}\\tipos, variáveis derivadas e \textit{target encoding}};
+        \node[passo] (ensemble) at (5.8, -4.6) {\textbf{Modelo}\\3 XGBoost por imposto; média das probabilidades};
+        \node[passo] (pos) at (9.75, -4.6) {\textbf{Faixas e regras}\\normalização, faixas A--D e regra de parcelamento};
+        \node[saida] (rating) at (13.55, -4.6) {Rating\\A, B, C ou D};
+        \draw[seta] (pre.north |- extracao.south) -- (pre.north);
+        \draw[seta] (pre) -- (ensemble);
+        \draw[seta] (ensemble) -- (pos);
+        \draw[seta] (pos) -- (rating);
+        \node[caixa, text width=2.3cm, fill=white] (uso) at (13.55, -7.5) {Priorização dos esforços de cobrança};
+        \draw[seta] (rating) -- (uso);
+
+        % 3. Explicação (contribuição deste trabalho)
+        \node[etapa] at (0.05, -6.2) {3. Explicação (este trabalho)};
+        \node[xai] (xai) at (7.75, -7.5) {\textbf{Camada de explicabilidade: SHAP e LIME}\\quanto cada variável pesou na classificação de cada CDA};
+        \node[caixa, text width=6.6cm, fill=white] (auditor) at (7.75, -9.35) {\textbf{Auditor fiscal}\\entende, revisa e motiva a classificação};
+        \draw[seta, dashed] (ensemble.south) -- (ensemble.south |- xai.north);
+        \draw[seta, dashed] (pos.south) -- (pos.south |- xai.north);
+        \draw[seta] (xai) -- (auditor);
+    \end{tikzpicture}
+    \caption[Cenário de aplicação do Rating da Dívida Ativa]{Cenário de aplicação do modelo de Rating da Dívida Ativa da SEFAZ-DF, da coleta dos dados à explicação da decisão. Na etapa 1, dados de três dimensões (o débito, o devedor e o objeto tributado) são extraídos dos sistemas da Secretaria e reunidos em uma base histórica para cada imposto. Na etapa 2, cada CDA passa pelo pré-processamento, recebe uma probabilidade de pagamento de um \textit{ensemble} de três modelos XGBoost e é enquadrada em uma das classes A, B, C ou D, que orienta a priorização da cobrança. A etapa 3, em tracejado, é a contribuição deste trabalho: uma camada que decompõe a decisão do modelo em contribuições por variável, permitindo ao auditor fiscal entender e fundamentar a classificação de cada CDA.}
+    \label{fig:cenario_aplicacao}
+\end{figure}
