@@ -110,7 +110,7 @@ Além da comparação direta com SHAP, a estabilidade do LIME foi examinada em t
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{figuras/xai/lime_stability_heatmap_rating_D_icms.png}
+    \includegraphics[width=\textwidth]{figuras/xai/lime_stability_heatmap_rating_D_icms.png}
     \caption[Estabilidade do \textit{top-5} do LIME em 30 execuções para uma CDA de \textit{rating} D no ICMS]{Estabilidade das explicações do LIME para uma mesma CDA sintética de \textit{rating} D no ICMS, explicada 30 vezes com sementes aleatórias de 42 a 71 (eixo horizontal). Cada linha é uma variável, e uma célula preta indica que, naquela execução, a variável ficou entre as cinco mais importantes; o número entre parênteses informa em quantas das 30 execuções isso ocorreu. Linhas totalmente pretas são fatores que o LIME identifica sempre; linhas intermitentes revelam fatores que entram e saem da explicação apenas por efeito da amostragem aleatória. Neste caso, quatro variáveis aparecem em pelo menos 28 das 30 execuções, enquanto a quinta posição alterna entre outras cinco.}
     \label{fig:lime_heatmap_icms_d}
 
@@ -128,8 +128,8 @@ No estudo de caso principal, o notebook do \textit{framework} do auditor foi exe
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.88\textwidth]{figuras/xai/shap_waterfall_rating_D_icms.png}
-    \caption[Explicação SHAP de uma CDA sintética de \textit{rating} D no ICMS]{Explicação SHAP (\textit{waterfall plot}) de uma CDA sintética de \textit{rating} D no ICMS, escolhida por ter a probabilidade mais próxima da mediana da classe. A leitura começa na base do gráfico, no valor esperado do modelo, $E[f(X)] = -1{,}467$, que corresponde à CDA média. Cada barra soma a contribuição de uma variável, cujo valor nesta CDA aparece à esquerda, antes do nome: barras azuis reduzem a chance de pagamento, e barras vermelhas a aumentam. O topo, $f(x) = -3{,}601$, é a saída final do modelo, equivalente a uma probabilidade normalizada de 0,022, abaixo do limite de 0,03 da classe D. Os valores estão na escala interna do modelo (logaritmo da razão de chances). As três maiores contribuições negativas vêm do grande número de dívidas abertas no núcleo do contribuinte (157), do alto valor total devido pelo CPF ou CNPJ e da ausência de histórico de regularização.}
+    \includegraphics[width=\textwidth]{figuras/xai/shap_waterfall_rating_D_icms.png}
+    \caption[Explicação SHAP de uma CDA sintética de \textit{rating} D no ICMS]{Explicação SHAP (gráfico de cascata) de uma CDA sintética de \textit{rating} D no ICMS, escolhida por ter a probabilidade mais próxima da mediana da classe. A leitura começa na base do gráfico, na linha tracejada do valor esperado do modelo ($-1{,}467$), que corresponde à CDA média, e sobe barra a barra. Cada barra é a contribuição de uma variável, cujo valor nesta CDA aparece abaixo do nome: barras azuis reduzem a chance de pagamento, e barras vermelhas a aumentam. A linha tracejada do topo ($-3{,}601$) é a saída final do modelo para esta CDA, equivalente a uma probabilidade normalizada de 0,022, abaixo do limite de 0,03 da classe D. Os valores estão na escala interna do modelo (logaritmo da razão de chances). As três maiores contribuições negativas vêm do grande número de dívidas em aberto do devedor (157), do alto valor total devido pelo CPF ou CNPJ e da ausência de histórico de regularização.}
     \label{fig:waterfall_icms_d}
 
 \end{figure}
