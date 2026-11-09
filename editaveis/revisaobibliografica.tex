@@ -200,8 +200,8 @@ A metodologia apresenta medidas de importância global das variáveis, que infor
 A Interpretabilidade Local responde à pergunta contrafactual específica do contribuinte: \textit{``Por que a \textbf{minha} dívida foi classificada como C e não B?  O que pesou contra mim?''}. Ferramentas como o SHAP (\textit{SHapley Additive exPlanations}) permitem decompor a nota de risco individual, mostrando, por exemplo:
 \begin{itemize}
     \item \textit{Probabilidade Base:} 20\%
-    \item \textit{(+) Impacto do Tempo Inativo:} +15\% (Aumentou o risco)
-    \item \textit{(-) Impacto do Histórico de Pagamento:} -5\% (Reduziu o risco)
+    \item \textit{(+) Impacto do histórico de pagamento do devedor:} +15 pontos (aumentou a probabilidade de pagamento)
+    \item \textit{(-) Impacto do tempo sem movimentação da dívida:} -5 pontos (reduziu a probabilidade de pagamento)
     \item \textit{Resultado Final:} 30\% (Rating B)
 \end{itemize}
 Sem esse nível de detalhe, a ``Revisão Individual'' torna-se inócua, pois o contribuinte não sabe quais fatos contestar.
@@ -396,15 +396,9 @@ Devido ao custo computacional exponencial ($2^F$) da fórmula exata, inviável p
 
 \subsubsection{Visualização e Propriedades Axiomáticas}
 
-A lógica de funcionamento do SHAP pode ser visualizada na \textbf{Figura \ref{fig:shap_waterfall}}, que apresenta um gráfico de cascata (\textit{waterfall plot}). Neste exemplo, a predição inicia-se na média global do modelo (valor esperado $E[f(x)]$). Em seguida, cada barra horizontal representa a contribuição marginal da variável, elevando ou reduzindo a pontuação final da predição. O valor final $f(x)$ é, portanto, a soma matemática exata dessas contribuições individuais.
+A lógica de funcionamento do SHAP pode ser visualizada na \textbf{Figura \ref{fig:shap_waterfall}}, que apresenta um gráfico de cascata (\textit{waterfall plot}). A figura representa o exemplo hipotético apresentado anteriormente: a predição inicia-se na média global do modelo (valor esperado $E[f(x)]$). Em seguida, cada barra horizontal representa a contribuição marginal da variável, elevando ou reduzindo a pontuação final da predição. O valor final $f(x)$ é, portanto, a soma matemática exata dessas contribuições individuais.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figuras/watterfall_plot.jpg}
-    \caption[Decomposição de uma predição individual com valores de Shapley]{Decomposição de uma predição individual com valores de Shapley, em um exemplo de previsão do número de bicicletas alugadas em um dia. O topo informa a predição do modelo para esse dia (2.329), a predição média (4.517) e a diferença entre elas ($-2.189$). Cada barra é a contribuição de uma variável, com seu valor observado à esquerda: barras para a direita aumentam a predição, e barras para a esquerda a reduzem. A soma de todas as barras é exatamente a diferença informada no topo; neste caso, a umidade alta e o tempo chuvoso explicam a maior parte da queda.}
-    \label{fig:shap_waterfall}
-    \small{Fonte: \citeonline{molnarInterpretableMachineLearning}.}
-\end{figure}
+\input{editaveis/fig_shap_exemplo}
 
 \citeonline{shreyaExplainableArtificialIntelligence2025} enfatizam que essa propriedade de aditividade, demonstrada visualmente acima, é o que garante a consistência da explicação e satisfaz axiomas essenciais:
 \begin{enumerate}
