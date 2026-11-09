@@ -14,7 +14,39 @@ Contudo, há uma distinção teleológica fundamental: enquanto instituições p
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{figuras/tax_analytics_credit_scoring.png}
+    \begin{tikzpicture}[
+        font=\footnotesize,
+        caixa/.style={draw, rounded corners=2pt, align=center, fill=gray!8, minimum height=1.05cm, inner sep=4pt,
+                     execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000}},
+        comum/.style={caixa, text width=4.0cm, minimum height=1.6cm},
+        lado/.style={caixa, text width=5.4cm, fill=white, minimum height=1.25cm},
+        resultado/.style={caixa, text width=5.4cm, fill=gray!25, font=\footnotesize\bfseries, minimum height=1.25cm},
+        seta/.style={-{Stealth[length=2.2mm]}, thick},
+        etapa/.style={font=\scriptsize\bfseries\scshape, anchor=west, text=gray!70!black}
+    ]
+        % Processo comum aos dois contextos
+        \node[etapa] at (0.05, 1.15) {Processo comum (isomorfia)};
+        \node[comum] (dados) at (2.1, 0) {\textbf{Dados históricos}\\comportamento passado de devedores};
+        \node[comum] (modelo) at (6.95, 0) {\textbf{Modelagem preditiva}\\aprendizado de máquina aplicado aos dados};
+        \node[comum, fill=gray!25] (estimativa) at (11.8, 0) {\textbf{Estimativa}\\probabilidade de inadimplência ou de pagamento};
+        \draw[seta] (dados) -- (modelo);
+        \draw[seta] (modelo) -- (estimativa);
+
+        % Especificidades de cada setor
+        \node[etapa] at (0.05, -1.65) {Especificidades};
+        \node[lado] (pub) at (3.8, -2.75) {\textbf{Setor público}\\análise tributária baseada em dados (Dívida Ativa)};
+        \node[lado] (priv) at (10.1, -2.75) {\textbf{Setor privado}\\pontuação de crédito (\textit{credit scoring})};
+        \node[lado] (pub_logica) at (3.8, -4.45) {\textbf{Lógica}\\impessoalidade e eficiência arrecadatória};
+        \node[lado] (priv_logica) at (10.1, -4.45) {\textbf{Lógica}\\minimização do risco financeiro privado};
+        \node[resultado] (pub_acao) at (3.8, -6.15) {Resultado: modulação da atuação de cobrança do Estado};
+        \node[resultado] (priv_acao) at (10.1, -6.15) {Resultado: concessão ou negação de crédito};
+        \draw[seta] (estimativa.south) -- ++(0,-0.45) -| (pub.north);
+        \draw[seta] (estimativa.south) -- ++(0,-0.45) -| (priv.north);
+        \draw[seta] (pub) -- (pub_logica);
+        \draw[seta] (pub_logica) -- (pub_acao);
+        \draw[seta] (priv) -- (priv_logica);
+        \draw[seta] (priv_logica) -- (priv_acao);
+    \end{tikzpicture}
     \caption[Isomorfia entre análise tributária baseada em dados e pontuação de crédito]{Isomorfia e especificidades entre a análise tributária baseada em dados (setor público) e a pontuação de crédito (setor privado). O bloco superior mostra o processo comum aos dois contextos: dados históricos alimentam um modelo preditivo que estima a probabilidade de inadimplência. Os blocos inferiores mostram onde eles divergem: no setor público, a decisão segue os princípios da impessoalidade e da eficiência arrecadatória e serve para modular a atuação de cobrança do Estado; no setor privado, segue a lógica de minimização do risco financeiro e resulta na concessão ou negação de crédito.}
     \label{fig:flow_tax_analytics}
 
