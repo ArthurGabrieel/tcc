@@ -1,0 +1,41 @@
+% Figura do referencial: bagging x boosting (desenho próprio).
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        font=\footnotesize,
+        caixa/.style={draw, rounded corners=2pt, align=center, fill=gray!8, minimum height=0.8cm, inner sep=3pt, text width=1.8cm, execute at begin node={\hyphenpenalty=10000\exhyphenpenalty=10000}},
+        dado/.style={caixa, fill=white},
+        saida/.style={caixa, fill=gray!25, font=\footnotesize\bfseries, text width=3.2cm},
+        seta/.style={-{Stealth[length=2mm]}, thick},
+        etapa/.style={font=\scriptsize\bfseries\scshape, text=gray!70!black}
+    ]
+        % Bagging (esquerda)
+        \node[etapa] at (2.25, 1.0) {\textit{Bagging} (paralelo)};
+        \node[dado, text width=2.4cm] (bbase) at (2.25, 0) {Base de treino};
+        \foreach \i/\x in {1/0.0, 2/2.25, 3/4.5} {
+            \node[dado] (ba\i) at (\x, -1.5) {Amostra \i};
+            \node[caixa] (bm\i) at (\x, -3.0) {Árvore \i};
+            \draw[seta] (bbase.south) -- (ba\i.north);
+            \draw[seta] (ba\i) -- (bm\i);
+        }
+        \node[saida] (bout) at (2.25, -4.6) {Média ou voto};
+        \foreach \i in {1,2,3} \draw[seta] (bm\i.south) -- (bout.north);
+
+        % Separador
+        \draw[gray!50, dashed] (5.85, 1.2) -- (5.85, -5.2);
+
+        % Boosting (direita)
+        \node[etapa] at (10.0, 1.0) {\textit{Boosting} (sequencial)};
+        \node[dado, text width=2.4cm] (gbase) at (10.0, 0) {Base de treino};
+        \node[caixa, text width=1.55cm] (gm1) at (7.3, -1.5) {Árvore 1};
+        \node[caixa, text width=1.55cm] (gm2) at (10.0, -1.5) {Árvore 2};
+        \node[caixa, text width=1.55cm] (gm3) at (12.7, -1.5) {Árvore 3};
+        \draw[seta] (gbase.south) -- (gm1.north);
+        \draw[seta] (gm1) -- node[above, font=\scriptsize] {erros} (gm2);
+        \draw[seta] (gm2) -- node[above, font=\scriptsize] {erros} (gm3);
+        \node[saida] (gout) at (10.0, -4.6) {Soma das contribuições};
+        \foreach \i in {1,2,3} \draw[seta] (gm\i.south) -- (gout.north);
+    \end{tikzpicture}
+    \caption[Diferença estrutural entre \textit{Bagging} e \textit{Boosting}]{Diferença estrutural entre as duas estratégias de \textit{ensemble}. À esquerda, no \textit{Bagging}, a base de treino é reamostrada com reposição, cada amostra treina uma árvore de forma paralela e independente, e as predições são combinadas por média ou voto. À direita, no \textit{Boosting}, as árvores são treinadas em sequência: cada uma é ajustada aos erros que o conjunto das anteriores ainda comete, e as predições são somadas. O XGBoost, usado no Rating da SEFAZ-DF, pertence à segunda família. Elaborada pelos autores com base em \citeonline{hastieElementsStatisticalLearning2009}.}
+    \label{fig:ensemble_comparison}
+\end{figure}

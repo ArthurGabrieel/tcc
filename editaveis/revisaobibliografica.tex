@@ -67,13 +67,7 @@ Existem duas estratégias principais de métodos de conjunto:
     \item \textbf{Boosting (aprendizado sequencial):} Os modelos são treinados de forma \textbf{sequencial}. Cada novo modelo tenta corrigir os erros cometidos pelos modelos anteriores. O objetivo principal do Boosting é reduzir o \textbf{viés} do modelo, evitando \textit{underfitting}. É nesta categoria que se enquadra a metodologia da SEFAZ-DF.
 \end{enumerate}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.9\textwidth]{figuras/baggingxboosting.jpg}
-  \caption[Diferença estrutural entre \textit{Bagging} e \textit{Boosting}]{Diferença estrutural entre as duas estratégias de \textit{ensemble}. À esquerda, no \textit{Bagging}, a base original (tabela verde) é reamostrada em vários subconjuntos, e cada um treina um modelo de forma paralela e independente; as predições são combinadas por média ou voto (lâmpada). À direita, no \textit{Boosting}, os modelos são treinados em sequência: cada um recebe os dados reponderados conforme os erros do anterior (tabelas de cores diferentes) e as predições são somadas. O XGBoost, usado no Rating da SEFAZ-DF, pertence à segunda família, com base em \citeonline{hastieElementsStatisticalLearning2009}.}
-  \label{fig:ensemble_comparison}
-
-\end{figure}
+\input{editaveis/fig_ensemble}
 
 \subsection{\textit{Gradient Boosting Decision Trees}}
 O \textit{Gradient Boosting}, formalizado por \citeonline{friedman2001greedy}, é uma técnica de otimização numérica no espaço de funções. O termo \textit{gradient}, em inglês, refere-se ao gradiente da função de perda, isto é, à direção de maior variação do erro do modelo. Ao contrário de modelos estatísticos tradicionais que buscam otimizar parâmetros, o \textit{Gradient Boosting} otimiza a própria função de predição $F(x)$.
