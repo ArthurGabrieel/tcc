@@ -1,0 +1,37 @@
+% Figura do referencial: intuição do LIME (desenho próprio, inspirado na figura original de Ribeiro et al., 2016).
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        font=\footnotesize,
+        classeA/.style={circle, draw=black, fill=white, inner sep=0pt},
+        classeB/.style={regular polygon, regular polygon sides=3, draw=black, fill=gray!45, inner sep=0pt},
+        seta/.style={-{Stealth[length=2.2mm]}, thick}
+    ]
+        % Região da classe B (cinza): abaixo de uma fronteira não linear
+        \fill[gray!14] (0,0) -- plot[smooth, tension=0.7] coordinates {(0,3.6) (1.5,2.4) (2.8,3.2) (3.7,2.25) (4.6,1.3) (5.8,2.0) (7.2,0.8)} -- (7.2,0) -- cycle;
+        \draw[thick] plot[smooth, tension=0.7] coordinates {(0,3.6) (1.5,2.4) (2.8,3.2) (3.7,2.25) (4.6,1.3) (5.8,2.0) (7.2,0.8)};
+        \draw (0,0) rectangle (7.2,4.5);
+
+        % Amostras perturbadas: tamanho proporcional ao peso (proximidade da instância)
+        \foreach \x/\y/\s in {3.1/1.9/4.2, 2.6/2.3/3.6, 4.0/1.2/3.6, 3.5/1.5/4.4, 1.4/1.5/2.4, 5.8/1.0/2.2, 1.0/2.3/2.2, 4.7/0.5/2.6}
+            \node[classeB, minimum size=\s mm] at (\x,\y) {};
+        \foreach \x/\y/\s in {4.2/2.6/4.4, 3.6/3.0/4.2, 4.8/2.2/3.6, 2.4/3.7/2.8, 5.6/3.0/2.6, 6.5/2.6/2.2, 0.8/4.0/1.8, 1.8/3.4/2.4}
+            \node[classeA, minimum size=\s mm] at (\x,\y) {};
+
+        % Instância explicada
+        \node[draw=black, fill=black, star, star points=5, minimum size=5mm, inner sep=0pt] (inst) at (3.7,2.25) {};
+
+        % Explicação local: reta ajustada na vizinhança
+        \draw[very thick, dashed] (2.4,3.6) -- (5.0,0.9);
+
+        % Rótulos
+        \node[align=left, anchor=west] (r1) at (7.6,3.6) {Fronteira de decisão\\do modelo complexo};
+        \draw[seta] (r1.west) -- (6.3,1.65);
+        \node[align=left, anchor=west] (r2) at (7.6,2.25) {Instância explicada};
+        \draw[seta] (r2.west) -- (inst.east);
+        \node[align=left, anchor=west] (r3) at (7.6,0.9) {Explicação local\\(modelo linear ponderado)};
+        \draw[seta] (r3.west) -- (4.85,1.05);
+    \end{tikzpicture}
+    \caption[Intuição do LIME: ajuste linear local em uma fronteira de decisão complexa]{Intuição do LIME. A região em cinza corresponde a uma das classes previstas pelo modelo complexo para cada combinação de duas variáveis, e sua borda é uma fronteira de decisão que não pode ser descrita por uma regra simples. O LIME gera amostras perturbadas ao redor da instância explicada (estrela), obtém a previsão do modelo para cada uma (triângulos na região cinza, círculos fora dela) e pondera as amostras pela proximidade à instância (tamanho dos símbolos). Com elas, ajusta um modelo linear (reta tracejada) que aproxima a fronteira apenas nessa vizinhança; seus coeficientes indicam quais variáveis empurram a instância para cada classe. Elaborada pelos autores com base em \citeonline{ribeiroWhyShouldTrust2016}.}
+    \label{fig:lime_fluxo}
+\end{figure}

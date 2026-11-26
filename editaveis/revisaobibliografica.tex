@@ -283,13 +283,7 @@ Onde:
     \item $\Omega(g)$ é uma medida de complexidade do modelo explicador (ex: número de coeficientes não nulos na regressão), garantindo que a explicação gerada seja, de fato, inteligível para o auditor fiscal.
 \end{itemize}
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.6\textwidth]{figuras/lime.png}
-  \caption[Intuição do LIME: ajuste linear local em uma fronteira de decisão complexa]{Intuição do LIME. Círculos e triângulos representam exemplos de duas classes, e a curva vermelha é a fronteira de decisão de um modelo complexo, que não pode ser descrita por uma regra simples. O LIME não tenta explicar a fronteira inteira: ele aproxima apenas o trecho próximo à instância de interesse por uma reta (segmento preto, ``explicação local''), cujos coeficientes indicam quais variáveis empurram aquela instância para cada lado. A explicação vale somente nessa vizinhança.}
-  \label{fig:lime_fluxo}
-  \small{Fonte: \citeonline{ribeiroWhyShouldTrust2016}.}
-\end{figure}
+\input{editaveis/fig_lime}
 
 \subsection{SHAP: Atribuição via Teoria dos Jogos}
 \label{subsec:shap}
