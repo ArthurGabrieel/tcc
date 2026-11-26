@@ -113,53 +113,15 @@ Embora a SEFAZ-DF utilize prioritariamente o XGBoost, a literatura recente apont
 A principal diferença do LightGBM é a estratégia de crescimento da árvore. Enquanto o XGBoost cresce a árvore por níveis (\textit{level-wise}), o LightGBM cresce por folhas (\textit{leaf-wise}), expandindo apenas o ramo que resulta na maior redução da perda. Isso torna o LightGBM mais rápido e capaz de lidar com volumes massivos de dados, embora exija maior cuidado com a configuração de hiperparâmetros para evitar sobreajuste em conjuntos de dados menores \cite{changCreditRiskPrediction2024}. Embora o LightGBM seja apresentado como referência técnica relevante, sua implementação experimental não faz parte do escopo deste trabalho, que se concentra na validação do modelo baseado em XGBoost e na aplicação de técnicas de explicabilidade.
 
 
-\section{O Dilema Variância-Viés e a Opacidade Algorítmica na Administração Tributária}
+\section{Acurácia, Interpretabilidade e Opacidade Algorítmica na Administração Tributária}
 \label{sec:tradeoff}
 
-A adoção de Inteligência Artificial na gestão fiscal impõe um dilema fundamental conhecido na estatística como dilema viés-variância (\textit{bias-variance trade-off}). Na prática administrativa, isso se traduz em uma tensão entre a acurácia, entendida como a capacidade de acertar a previsão de recuperação do crédito, e a interpretabilidade, entendida como a capacidade de explicar o motivo da previsão \cite{rudinStopExplainingBlack2019}.
+A adoção de Inteligência Artificial na gestão fiscal costuma ser apresentada como uma escolha entre acurácia, entendida como a capacidade de acertar a previsão de recuperação do crédito, e interpretabilidade, entendida como a capacidade de explicar o motivo da previsão. Nessa leitura, modelos transparentes, como a Regressão Logística, cujos coeficientes indicam diretamente o efeito de cada variável sobre o \textit{log-odds} do pagamento \cite{hastieElementsStatisticalLearning2009}, teriam desempenho inferior ao de modelos de \textit{Gradient Boosting}, capazes de capturar interações não lineares, como a de um atraso que só indica risco em determinado imposto ou porte de empresa \cite{zouInterpretableCreditScoring2025}.
 
-\subsection{A Natureza do Dilema entre Acurácia e Interpretabilidade}
+\citeonline{rudinStopExplainingBlack2019} contesta esse dilema. Para a autora, em dados tabulares e bem estruturados, como os de crédito, a diferença de desempenho entre modelos complexos e modelos interpretáveis bem construídos costuma ser pequena, e a crença no dilema leva a adotar caixas-pretas sem necessidade. Ela argumenta ainda que, em decisões de alto impacto, explicar \textit{a posteriori} um modelo opaco é arriscado, pois a explicação é uma aproximação que pode não ser fiel ao modelo em todos os casos, e recomenda usar modelos interpretáveis por construção.
 
-Como modelo de referência para compreender a escolha pelo \textit{Gradient Boosting}, é essencial analisar o funcionamento da Regressão Logística, tradicionalmente utilizada em contextos de pontuação de crédito (\textit{Credit Scoring}).
+Este trabalho não toma partido nesse debate quanto à escolha do modelo. O \textit{Rating} da SEFAZ-DF já está em produção com modelos XGBoost, e o objeto de estudo é esse modelo, sem retreinamento nem substituição. A crítica de \citeonline{rudinStopExplainingBlack2019} é incorporada de duas formas: na metodologia, ao medir se as explicações são fiéis ao modelo e estáveis, em vez de supor que sejam; e nos trabalhos futuros, ao indicar a comparação com um modelo interpretável por construção treinado sobre os mesmos dados.
 
-A Regressão Logística é um modelo paramétrico que estima a probabilidade de um evento binário, como a inadimplência, mapeando as variáveis de entrada para uma função sigmoide. A função sigmoide é uma função matemática que transforma qualquer valor real em um número entre 0 e 1, permitindo interpretar a saída do modelo como probabilidade. Diferentemente da regressão linear, que prevê valores contínuos, a Regressão Logística transforma a soma ponderada das variáveis explicativas em um valor entre 0 e 1, conforme ilustrado na Figura \ref{fig:fluxograma_lr} \cite{hastieElementsStatisticalLearning2009}.
-
-\begin{figure}[H]
-    \centering
-    % Substitua 'nome_da_sua_imagem.png' pelo arquivo que você enviou
-    \includegraphics[width=0.9\textwidth]{figuras/Flowchart-of-logistic-regression.png} 
-    \caption[Fluxo de processamento da Regressão Logística]{Fluxo de processamento da Regressão Logística. Cada variável de entrada $x_1, \dots, x_n$ é multiplicada por um peso $w_1, \dots, w_n$; os produtos são somados ao intercepto $b$ (\textit{bias}), e o resultado passa pela função sigmoide, que o converte em uma probabilidade entre 0 e 1. Como cada peso indica diretamente quanto a variável aumenta ou reduz a probabilidade, o modelo é considerado interpretável por construção (caixa-branca).}
-    \label{fig:fluxograma_lr}
-\end{figure}
-
-Matematicamente, o modelo assume que existe uma relação linear entre as variáveis independentes e o logaritmo das chances (\textit{log-odds}) do evento. Essa característica o torna um modelo de caixa-branca: ao analisar os coeficientes $\beta$, isto é, os pesos atribuídos pelo modelo a cada variável explicativa, o auditor sabe exatamente o quanto cada variável aumentou ou diminuiu a probabilidade final \cite{hastieElementsStatisticalLearning2009}.
-
-\noindent\textbf{Análise comparativa: por que não usar Regressão Logística?}
-
-Apesar de sua transparência intrínseca, a Regressão Logística apresenta limitações severas para o problema da Dívida Ativa. A Tabela \ref{tab:vantagens_lr} resume as características do método.
-
-\begin{table}[H]
-\centering
-\caption[Vantagens e desvantagens da Regressão Logística]{Vantagens (coluna da esquerda) e desvantagens (coluna da direita) da Regressão Logística quando aplicada à classificação de créditos tributários. Cada linha opõe um ponto forte a uma limitação relacionada: a interpretabilidade direta tem como contrapartida a suposição de relações lineares, o que explica por que a SEFAZ-DF optou por um modelo não linear, com base em \citeonline{hastieElementsStatisticalLearning2009} e \citeonline{changCreditRiskPrediction2024}.}
-\label{tab:vantagens_lr}
-    \small
-    \renewcommand{\arraystretch}{1.2}
-    \begin{tabularx}{\textwidth}{LL}
-        \toprule
-        \textbf{Vantagens} & \textbf{Desvantagens} \\
-        \midrule
-        \textbf{Interpretabilidade direta:} os pesos (coeficientes) indicam a direção e a magnitude do impacto de cada variável. & \textbf{Linearidade restritiva:} assume que as relações são lineares e falha em capturar padrões complexos (ex.: a dívida só é risco se associada a um setor específico). \\
-        \addlinespace
-        \textbf{Baixo custo computacional:} treinamento rápido e eficiente. & \textbf{Alto viés (\textit{underfitting}):} tende a simplificar excessivamente a realidade fiscal, ignorando nuances do comportamento do contribuinte. \\
-        \addlinespace
-        \textbf{Probabilística:} retorna naturalmente uma probabilidade bem calibrada. & \textbf{Sensibilidade a \textit{outliers}:} valores extremos podem distorcer significativamente os coeficientes globais. \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-A inadequação da Regressão Logística para a SEFAZ-DF reside na \textbf{incapacidade de modelar interações não-lineares}. Dados fiscais são inerentemente complexos: o impacto do ``Tempo de Atraso'' na probabilidade de pagamento não é linear e depende de outras variáveis (como o ``Tipo de Imposto'' ou ``Porte da Empresa''). 
-
-Enquanto a Regressão Logística traça uma fronteira de decisão simples (linear), o modelo de \textit{Gradient Boosting} consegue desenhar fronteiras complexas e irregulares, capturando os devedores que modelos lineares deixariam escapar. Dado que uma pequena melhoria na acurácia representa milhões em recuperação de crédito, a perda de transparência direta da Regressão Logística pode ser compensada pela aplicação de técnicas de explicabilidade sobre o modelo mais potente \cite{zouInterpretableCreditScoring2025}.
 
 \subsection{Tipologia de Vieses e Riscos à Justiça Fiscal}
 A opacidade dos modelos de caixa-preta esconde riscos específicos que a auditoria tradicional não detecta. A literatura especializada em justiça em aprendizado de máquina (\textit{Fairness in ML}) identifica três categorias críticas para a administração pública:
@@ -229,7 +191,7 @@ Para mitigar esses riscos e cumprir o dever de motivação dos atos administrati
 
 A metodologia apresenta medidas de importância global das variáveis, que informam, por exemplo: ``Em média, o tempo de inatividade é importante para o modelo''. Contudo, para o devido processo legal e a ampla defesa, é necessária a \textbf{Interpretabilidade Local} (explicabilidade pós-hoc) \cite{lundbergUnifiedApproachInterpreting2017}.
 
-A Interpretabilidade Local responde à pergunta contrafactual específica do contribuinte: \textit{``Por que a \textbf{minha} dívida foi classificada como C e não B?  O que pesou contra mim?''}. Ferramentas como o SHAP (\textit{SHapley Additive exPlanations}) permitem decompor a nota de risco individual, mostrando, por exemplo:
+A Interpretabilidade Local responde à pergunta específica do contribuinte: \textit{``Por que a \textbf{minha} dívida foi classificada como C e não B?  O que pesou contra mim?''}. Ferramentas como o SHAP (\textit{SHapley Additive exPlanations}) permitem decompor a nota de risco individual, mostrando, por exemplo:
 \begin{itemize}
     \item \textit{Probabilidade Base:} 20\%
     \item \textit{(+) Impacto do histórico de pagamento do devedor:} +15 pontos (aumentou a probabilidade de pagamento)
@@ -238,13 +200,6 @@ A Interpretabilidade Local responde à pergunta contrafactual específica do con
 \end{itemize}
 Sem esse nível de detalhe, a ``Revisão Individual'' torna-se inócua, pois o contribuinte não sabe quais fatos contestar.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.72\textwidth]{figuras/Performance_Versus_Explainability.jpg}
-    \caption[Relação entre performance e explicabilidade das técnicas de aprendizado de máquina]{Relação entre performance e explicabilidade das principais famílias de técnicas de aprendizado de máquina. À esquerda, as técnicas agrupadas por família; à direita, cada uma é posicionada em um plano cujo eixo horizontal é a explicabilidade e cujo eixo vertical é a performance do modelo (rotulada no original como \textit{learning performance}). Quanto mais alta e mais à esquerda a técnica, mais capaz de representar relações complexas e menos explicável ela é: redes de aprendizado profundo e métodos de \textit{ensemble}, como o XGBoost, ocupam o topo, enquanto árvores de decisão isoladas são mais explicáveis e menos precisas.}
-    \label{fig:tradeoff}
-    \small{Fonte: \cite{raizonvilleBlackBoxGlass2022}.}
-\end{figure}
 
 
 \section{O Custo Econômico e Estratégico da Interpretabilidade}
@@ -347,7 +302,7 @@ Para resolver o conflito entre a performance do modelo e a transparência, a lit
 
 O problema central que a Inteligência Artificial Explicável busca resolver é a \textit{opacidade cognitiva}. Modelos avançados, como redes neurais e \textit{Gradient Boosting}, realizam milhões de operações matemáticas internas para chegar a um resultado. Para um ser humano, esse processo é inescrutável — uma verdadeira ``caixa-preta'' onde a lógica de decisão é inacessível \cite{molnarInterpretableMachineLearning}.
 
-A proposta da Inteligência Artificial Explicável é atuar como uma ``ponte'' ou uma interface tradutora. Segundo \citeonline{reddyBridgingAIHuman2024}, o objetivo dessa abordagem não é simplificar o modelo matemático em si, o que reduziria sua precisão, mas fornecer uma camada interpretativa capaz de traduzir as correlações complexas do algoritmo em justificativas causais inteligíveis para humanos (ex: ``O risco foi considerado alto \textit{porque} o valor da dívida excede a média do setor'').
+A proposta da Inteligência Artificial Explicável é atuar como uma ``ponte'' ou uma interface tradutora. Segundo \citeonline{reddyBridgingAIHuman2024}, o objetivo dessa abordagem não é simplificar o modelo matemático em si, o que reduziria sua precisão, mas fornecer uma camada interpretativa capaz de descrever, em termos inteligíveis para humanos, como cada variável pesou na saída do modelo (ex: ``o valor da dívida, acima da média do setor, foi o fator que mais reduziu a probabilidade estimada de pagamento''). Essas explicações são atribuições associativas: descrevem o comportamento do modelo diante de uma entrada, e não a causa real do pagamento ou do inadimplemento do contribuinte \cite{molnarInterpretableMachineLearning}.
 
 No contexto da administração pública, a Inteligência Artificial Explicável deixa de ser apenas uma ferramenta de depuração de código para se tornar um instrumento de governança algorítmica. Ela permite que o Estado mantenha a eficiência da IA enquanto restaura a \textit{accountability} (responsabilização) e o direito ao contraditório, transformando a ``caixa-preta'' em uma ``caixa de vidro'' auditável \cite{raizonvilleBlackBoxGlass2022}.
 
@@ -398,7 +353,7 @@ Onde:
   \small{Fonte: \citeonline{ribeiroWhyShouldTrust2016}.}
 \end{figure}
 
-\subsection{SHAP: Consistência via Teoria dos Jogos}
+\subsection{SHAP: Atribuição via Teoria dos Jogos}
 \label{subsec:shap}
 
 Para superar a instabilidade estocástica do LIME, \citeonline{lundbergUnifiedApproachInterpreting2017} propuseram o SHAP (\textit{SHapley Additive exPlanations}). Este método unifica a interpretabilidade em aprendizado de máquina com a Teoria dos Jogos Cooperativos, desenvolvida pelo Nobel de Economia Lloyd Shapley em 1953. Conceitualmente, o SHAP calcula a contribuição marginal média de cada variável para a nota final do \textit{rating}, considerando todas as combinações possíveis de fatores \cite{nallakaruppanCreditRiskAssessment2024}.
@@ -432,24 +387,23 @@ A lógica de funcionamento do SHAP pode ser visualizada na \textbf{Figura \ref{f
 
 \input{editaveis/fig_shap_exemplo}
 
-\citeonline{shreyaExplainableArtificialIntelligence2025} enfatizam que essa propriedade de aditividade, demonstrada visualmente acima, é o que garante a consistência da explicação e satisfaz axiomas essenciais:
+\citeonline{lundbergUnifiedApproachInterpreting2017} mostram que os valores de Shapley são a única atribuição aditiva que satisfaz simultaneamente três propriedades \cite{shreyaExplainableArtificialIntelligence2025}:
 \begin{enumerate}
-    \item \textbf{Eficiência:} A soma das barras (contribuições) explica exatamente o desvio da predição em relação à média. 
-    \item \textbf{Consistência:} Se o modelo altera o peso de uma variável, o tamanho da barra no gráfico reflete essa mudança proporcionalmente.
-    \item \textbf{Simetria:} Variáveis que contribuem igualmente recebem valores SHAP iguais.
-    \item \textbf{Dummy (Nulidade):} Variáveis que não influenciam a predição recebem valor SHAP igual a zero.
+    \item \textbf{Acurácia local:} a soma das contribuições $\phi_i$ com o valor de referência reproduz exatamente a saída do modelo para a CDA explicada, como na Figura \ref{fig:shap_waterfall}.
+    \item \textbf{Ausência (\textit{missingness}):} uma variável ausente da entrada simplificada recebe contribuição nula.
+    \item \textbf{Consistência:} se um modelo $f'$ é alterado em relação a $f$ de modo que a contribuição marginal de uma variável aumenta ou se mantém em todas as coalizões de variáveis, isto é, $f'_x(z') - f'_x(z' \setminus i) \geq f_x(z') - f_x(z' \setminus i)$ para toda coalizão $z'$, então a atribuição dessa variável não diminui: $\phi_i(f', x) \geq \phi_i(f, x)$. Trata-se de uma propriedade de monotonicidade, e não de proporcionalidade entre o peso da variável e o tamanho da barra.
 \end{enumerate}
 
-Essas propriedades indicam que o SHAP é uma ferramenta adequada e tecnicamente consistente para justificar administrativamente a classificação de risco da SEFAZ-DF, permitindo ao auditor fiscal decompor a nota do \textit{rating} em parcelas exatas atribuíveis a cada fator \cite{molnarInterpretableMachineLearning}.
+Essas propriedades decorrem dos axiomas clássicos dos valores de Shapley (eficiência, simetria, nulidade e aditividade) e permitem ao auditor fiscal decompor a saída do modelo em parcelas que somam exatamente o resultado da CDA. As garantias, porém, valem para a decomposição da saída do modelo, e não para a realidade que ele representa: a atribuição depende do valor de referência adotado e da forma como a ausência de uma variável é simulada, e, quando as variáveis são correlacionadas, o crédito pode ser repartido entre elas de modos diferentes conforme essa escolha \cite{molnarInterpretableMachineLearning}.
 
 \subsection{Análise Comparativa e Justificativa da Escolha}
 \label{subsec:comparacao_xai}
 
-A Tabela \ref{tab:shap_vs_lime} consolida as diferenças fundamentais entre as duas abordagens, destacando as vantagens do SHAP em termos de consistência para fins de auditoria e segurança jurídica.
+A Tabela \ref{tab:shap_vs_lime} consolida as diferenças fundamentais entre as duas abordagens, destacando as vantagens do SHAP para fins de auditoria e os limites dessas vantagens.
 
 \begin{table}[H]
     \centering
-    \caption[Comparação técnica entre LIME e SHAP]{Comparação técnica entre LIME e SHAP segundo oito critérios relevantes para a auditoria fiscal. Cada linha contrapõe as duas técnicas em um critério: fundamento teórico, garantias formais, consistência, custo computacional, reprodutibilidade, forma de interpretação, segurança jurídica e papel sugerido no contexto da SEFAZ-DF. Em síntese, o LIME é mais simples e rápido, porém estocástico; o SHAP é determinístico e tem garantias axiomáticas, sendo mais adequado à justificativa formal de um \textit{rating}, com base em \citeonline{molnarInterpretableMachineLearning} e \citeonline{lundbergUnifiedApproachInterpreting2017}.}
+    \caption[Comparação técnica entre LIME e SHAP]{Comparação técnica entre LIME e SHAP segundo oito critérios relevantes para a auditoria fiscal. Cada linha contrapõe as duas técnicas em um critério: fundamento teórico, garantias formais, consistência, custo computacional, reprodutibilidade, forma de interpretação, segurança jurídica e papel sugerido no contexto da SEFAZ-DF. Em síntese, o LIME é mais simples e rápido, porém estocástico; o SHAP é determinístico e tem garantias axiomáticas, mas sua explicação depende da referência adotada e da correlação entre as variáveis, com base em \citeonline{molnarInterpretableMachineLearning} e \citeonline{lundbergUnifiedApproachInterpreting2017}.}
     \label{tab:shap_vs_lime}
     \small
     \renewcommand{\arraystretch}{1.2}
@@ -458,17 +412,17 @@ A Tabela \ref{tab:shap_vs_lime} consolida as diferenças fundamentais entre as d
         \textbf{Critério} & \textbf{LIME} & \textbf{SHAP} \\
         \midrule
         Fundamentação & Aproximação linear local via perturbação & Teoria dos Jogos Cooperativos (valores de Shapley) \\
-        Garantias axiomáticas & Nenhuma garantia formal & Eficiência, simetria, nulidade e aditividade \\
-        Consistência & Baixa (sensível à amostragem e aos parâmetros do \textit{kernel}) & Alta (única solução que satisfaz os axiomas) \\
+        Garantias axiomáticas & Nenhuma garantia formal & Acurácia local, ausência e consistência (monotonicidade) \\
+        Sensibilidade a escolhas & Amostragem, largura do \textit{kernel} e discretização & Valor de referência e tratamento de variáveis correlacionadas \\
         Complexidade & Baixa a média ($O(N \cdot M)$) & Alta (exata) ou otimizada ($O(TLD^2)$ via TreeSHAP) \\
         Reprodutibilidade & Estocástica (pode variar entre execuções) & Determinística (mesmo resultado sempre) \\
         Interpretação & Pesos de um modelo linear local & Contribuição marginal para o desvio da média \\
-        Segurança jurídica & Questionável (instabilidade) & Robusta (consistência matemática auditável) \\
+        Segurança jurídica & Limitada pela variação entre execuções & Maior, por ser reprodutível e aditiva, desde que a referência seja declarada \\
         Uso na SEFAZ-DF & Diagnóstico exploratório rápido & Justificativa formal de \textit{ratings} \\
         \bottomrule
     \end{tabularx}
 \end{table}
 
-A análise comparativa evidencia que, para o contexto específico da SEFAZ-DF, o \textbf{SHAP apresenta vantagens relevantes}. A consistência determinística e as garantias axiomáticas são requisitos fundamentais quando as explicações geradas pelo modelo podem ser objeto de contestação administrativa ou judicial. Um contribuinte que questione seu \textit{rating} tem direito a uma explicação reproduzível e matematicamente fundamentada, e o SHAP oferece atributos compatíveis com essa exigência.
+A análise comparativa evidencia que, para o contexto específico da SEFAZ-DF, o \textbf{SHAP apresenta vantagens relevantes}. A reprodutibilidade e as garantias axiomáticas são relevantes quando as explicações podem ser objeto de contestação administrativa ou judicial: um contribuinte que questione seu \textit{rating} tem direito a uma explicação reproduzível e matematicamente fundamentada. Determinismo, contudo, não equivale a robustez. A mesma CDA produz sempre a mesma explicação SHAP, mas essa explicação muda se a referência for outra, e, entre variáveis correlacionadas, a repartição do crédito pode não corresponder à forma como as variáveis se relacionam nos dados \cite{molnarInterpretableMachineLearning}. Por isso, a vantagem do SHAP é condicionada à declaração da referência adotada e à verificação de sua sensibilidade a ela.
 
 Isso não invalida o uso do LIME como ferramenta complementar para análises exploratórias iniciais ou para comunicação simplificada com partes interessadas não técnicas. Contudo, para a documentação oficial e a motivação formal dos atos administrativos de classificação de risco, o SHAP tende a ser a metodologia de referência.
