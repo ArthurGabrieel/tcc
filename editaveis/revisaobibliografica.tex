@@ -122,6 +122,8 @@ A adoção de Inteligência Artificial na gestão fiscal costuma ser apresentada
 
 Este trabalho não toma partido nesse debate quanto à escolha do modelo. O \textit{Rating} da SEFAZ-DF já está em produção com modelos XGBoost, e o objeto de estudo é esse modelo, sem retreinamento nem substituição. A crítica de \citeonline{rudinStopExplainingBlack2019} é incorporada de duas formas: na metodologia, ao medir se as explicações são fiéis ao modelo e estáveis, em vez de supor que sejam; e nos trabalhos futuros, ao indicar a comparação com um modelo interpretável por construção treinado sobre os mesmos dados.
 
+Há, de todo modo, evidência de que a diferença de desempenho tem valor econômico em crédito. Em um banco comercial norueguês, \citeonline{delangeExplainableAICredit2022} estimaram que substituir a Regressão Logística por um modelo \textit{LightGBM} reduziria as perdas anuais entre 20 e 30 milhões de coroas norueguesas, conforme o limiar de inadimplência adotado, valor que os próprios autores tratam como aproximado. Em um exercício de simulação com dados de um banco espanhol, sob a abordagem de modelos internos (IRB) de Basileia e para exposições de varejo, \citeonline{alonsoUnderstandingPerformance2021} estimaram que usar XGBoost em vez de uma regressão logística penalizada (Lasso) reduziria os requisitos de capital regulatório entre 12,4\% e 17\%. São estimativas de contextos bancários, que não se transferem diretamente à Dívida Ativa, mas indicam por que administrações e bancos têm preferido modelos de maior desempenho e investido em explicá-los \cite{schmittExplainableAutomatedMachine2024}.
+
 
 \subsection{Tipologia de Vieses e Riscos à Justiça Fiscal}
 A opacidade dos modelos de caixa-preta esconde riscos específicos que a auditoria tradicional não detecta. A literatura especializada em justiça em aprendizado de máquina (\textit{Fairness in ML}) identifica três categorias críticas para a administração pública:
@@ -202,21 +204,7 @@ Sem esse nível de detalhe, a ``Revisão Individual'' torna-se inócua, pois o c
 
 
 
-\section{O Custo Econômico e Estratégico da Interpretabilidade}
-\label{sec:custo}
-
-A decisão de restringir a tecnologia da administração tributária apenas a modelos simples e interpretáveis impõe um custo de oportunidade mensurável e significativo. Embora a transparência seja um requisito ético e legal, a literatura demonstra que a ``taxa de sacrifício'' em performance ao abandonar modelos de caixa-preta pode representar perdas milionárias em recuperação de crédito.
-
-Raizonville e Lambin (2022) modelam a explicabilidade como uma decisão estratégica e demonstram quantitativamente que modelos de caixa-preta otimizados podem gerar um retorno sobre o investimento (ROI) superior na ordem de \textbf{15 a 20 pontos-base} em carteiras de crédito, comparado a modelos lineares tradicionais. Em escalas de dívida pública, essa diferença percentual traduz-se em montantes absolutos expressivos.
-
-Um estudo empírico realizado por \citeonline{delangeExplainableAICredit2022} em um banco comercial norueguês quantificou o impacto financeiro dessa escolha tecnológica. Ao comparar um modelo de \textit{Light Gradient Boosting Machine} (similar ao XGBoost usado pela SEFAZ-DF) com uma Regressão Logística tradicional, os autores identificaram que o modelo avançado reduziu as perdas financeiras anuais entre \textbf{20 e 35 milhões de coroas norueguesas (aprox. 2 a 3,5 milhões de dólares)}. Essa economia decorreu tanto da redução de falsos negativos (inadimplentes não identificados) quanto da diminuição de falsos positivos (bons pagadores erroneamente classificados como risco).
-
-Além do impacto direto na arrecadação, \citeonline{alonsoUnderstandingPerformance2021} indicam que o uso de técnicas avançadas de aprendizado de máquina pode levar a uma redução de \textbf{12,4\% a 17\% nos requisitos de capital regulatório} para instituições financeiras, devido à maior precisão na mensuração do risco. Esse achado também é retomado por \citeonline{schwartzEnhancingMLModels2025} no debate sobre performance e interpretabilidade.
-
-No contexto da Dívida Ativa do Distrito Federal, esse ``custo da explicabilidade'' evidencia o risco de ineficiência alocativa. Utilizar modelos menos precisos apenas para satisfazer requisitos superficiais de transparência poderia aumentar a probabilidade de erros de classificação, como enquadrar contribuintes com potencial de recuperação em categorias de baixa recuperabilidade. Portanto, a literatura sugere que a solução economicamente viável não é reduzir a complexidade do modelo, mas sim investir em camadas computacionais que expliquem essa complexidade de forma \textit{pós-hoc} \cite{schmittExplainableAutomatedMachine2024}.
-
-
-\section{Desbalanceamento de Dados e Avaliação da Performance do Modelo}
+\section{Desbalanceamento de Dados e Avaliação do Modelo}
 \label{sec:metricas}
 
 A validação de modelos de pontuação de crédito (\textit{Credit Scoring}) e Dívida Ativa exige métricas que vão além da simples taxa de acerto, uma vez que as bases de dados tributárias são inerentemente desbalanceadas (a quantidade de bons pagadores difere drasticamente da de inadimplentes). Segundo \citeonline{changCreditRiskPrediction2024}, a escolha inadequada da métrica pode levar a uma falsa percepção de eficácia do modelo.
@@ -233,64 +221,14 @@ Uma base é desbalanceada quando os exemplos não estão distribuídos de forma 
 
 Os dois níveis produzem efeitos diferentes. O desbalanceamento macro faz o modelo favorecer a classe majoritária: como errar a classe rara pesa pouco no erro total do treinamento, o modelo pode aprender a quase nunca prevê-la. O desbalanceamento micro é mais difícil de perceber, porque o modelo pode ter boa performance média e, ao mesmo tempo, errar sistematicamente para um subgrupo pequeno. Quando esse subgrupo coincide com um recorte social (região, porte, tipo de contribuinte), o erro passa a ser também um problema de justiça, tratado na Seção \ref{subsec:vies_metricas}. O efeito do desbalanceamento micro sobre um modelo treinado com os dados deste trabalho é medido experimentalmente na Seção \ref{sec:resultado_desbalanceamento}.
 
-\subsection{Matriz de Confusão e Métricas Derivadas}
-A base para a avaliação de classificadores binários é a Matriz de Confusão, que cruza as predições do modelo com a realidade fiscal, gerando quatro resultados possíveis: Verdadeiros Positivos ($VP$), Verdadeiros Negativos ($VN$), Falsos Positivos ($FP$) e Falsos Negativos ($FN$).
-
-\begin{itemize}
-    \item \textbf{Acurácia (\textit{Accuracy}):} Mede a proporção global de acertos.
-    \begin{equation}
-        ACC = \frac{VP + VN}{VP + VN + FP + FN}
-    \end{equation}
-    \textbf{Limitação:} Em bases desbalanceadas, a acurácia é enganosa. Se 95\% dos contribuintes são inadimplentes, um modelo ``ingênuo'' que classifique \textit{todos} como inadimplentes terá 95\% de acurácia, mas será inútil para identificar os 5\% de bons pagadores (o ``Paradoxo da Acurácia'') \cite{noriegaMachineLearningCredit2023}.
-
-    \item \textbf{Revocação ou Sensibilidade (\textit{Recall}):} Mede a capacidade do modelo de detectar a classe de interesse (ex: identificar corretamente quem vai pagar a dívida).
-    \begin{equation}
-        Recall = \frac{VP}{VP + FN}
-    \end{equation}
-    \textbf{Importância:} No contexto da SEFAZ, um baixo \textit{Recall} significa perder a oportunidade de cobrar um contribuinte que teria capacidade de pagamento (Falso Negativo), gerando perda direta de receita.
-
-    \item \textbf{Precisão (\textit{Precision}):} Mede, entre os casos classificados como positivos pelo modelo, quantos de fato pertencem à classe positiva.
-    \begin{equation}
-        Precision = \frac{VP}{VP + FP}
-    \end{equation}
-    \textbf{Importância:} No contexto da SEFAZ, baixa precisão significa direcionar esforços de cobrança a contribuintes com menor probabilidade de recuperação, consumindo recursos administrativos sem retorno proporcional.
-
-    \item \textbf{F1-Score:} É a média harmônica entre a Precisão (qualidade do acerto) e o \textit{Recall} (quantidade de acertos).
-    \begin{equation}
-        F1 = 2 \cdot \frac{Precision \cdot Recall}{Precision + Recall}
-    \end{equation}
-    Esta métrica é preferível em cenários fiscais, pois penaliza modelos muito imprecisos ou que omitem muitos devedores (baixo recall).
-\end{itemize}
-
-\subsection{Médias Micro e Macro das Métricas}
-
-Quando há mais de duas classes, como as quatro classes do Rating, as métricas acima são calculadas para cada classe $k$ e precisam ser resumidas em um único número. Há duas formas de fazê-lo, e a diferença entre elas é justamente o que revela o efeito do desbalanceamento \cite{sokolovaSystematicAnalysisPerformance2009}:
-
-\begin{itemize}
-    \item \textbf{Média micro:} soma os acertos e erros de todas as classes antes de calcular a métrica. Cada CDA tem o mesmo peso, de modo que o resultado é dominado pelas classes mais numerosas:
-    \begin{equation}
-        Precision_{micro} = \frac{\sum_{k} VP_k}{\sum_{k} (VP_k + FP_k)}
-    \end{equation}
-    \item \textbf{Média macro:} calcula a métrica separadamente em cada uma das $K$ classes e tira a média simples. Cada classe tem o mesmo peso, independentemente do tamanho:
-    \begin{equation}
-        F1_{macro} = \frac{1}{K} \sum_{k=1}^{K} F1_k
-    \end{equation}
-\end{itemize}
-
-Um modelo que acerta bem as classes grandes e falha nas pequenas apresenta média micro alta e média macro baixa. No exemplo do ICMS, um classificador que atribuísse C a todas as CDAs teria média micro próxima de 63\% e $F1$ igual a zero nas classes A, B e D, o que derrubaria a média macro. A mesma lógica pode ser aplicada a subgrupos de contribuintes, em vez de classes: calcular a métrica separadamente por região, por porte ou por imposto expõe o desbalanceamento micro que a média geral esconde.
-
 \subsection{Curva ROC e Área sob a Curva (AUC-ROC)}
-A Área sob a Curva ROC (AUC-ROC) mede a capacidade do modelo de distinguir entre classes ao longo de diferentes limiares de decisão. A curva ROC relaciona a taxa de verdadeiros positivos à taxa de falsos positivos, resumindo o comportamento do classificador em múltiplos pontos de corte \cite{noriegaMachineLearningCredit2023, changCreditRiskPrediction2024}.
+Como a taxa de acerto é enganosa em bases desbalanceadas, a capacidade de um classificador binário de separar as classes é medida neste trabalho pela Área sob a Curva ROC (AUC-ROC). Para cada limiar de decisão, a curva ROC relaciona a taxa de verdadeiros positivos ($TPR$), fração das CDAs pagas que o modelo classifica como pagas, à taxa de falsos positivos ($FPR$), fração das CDAs não pagas que o modelo classifica como pagas \cite{noriegaMachineLearningCredit2023, changCreditRiskPrediction2024}:
 
 \begin{equation}
-    TPR = \frac{VP}{VP + FN}
+    TPR = \frac{VP}{VP + FN} \qquad FPR = \frac{FP}{FP + VN}
 \end{equation}
 
-\begin{equation}
-    FPR = \frac{FP}{FP + VN}
-\end{equation}
-
-Quanto mais a curva se aproxima do canto superior esquerdo do gráfico ROC, melhor é a capacidade discriminatória do modelo. Em termos sintéticos, quanto mais próxima de 1 for a AUC-ROC, maior é a probabilidade de o classificador atribuir maior risco aos casos efetivamente problemáticos do que aos casos regulares.
+em que $VP$ e $FN$ são as CDAs pagas classificadas, respectivamente, como pagas e não pagas, e $FP$ e $VN$, as CDAs não pagas classificadas como pagas e não pagas. A AUC-ROC equivale à probabilidade de o modelo atribuir maior probabilidade de pagamento a uma CDA paga sorteada do que a uma CDA não paga sorteada: vale 0,5 para um classificador aleatório e 1 para a separação perfeita. Por não depender de um limiar, ela pode ser comparada entre grupos de contribuintes, o que a torna útil para revelar o desbalanceamento micro.
 
 
 \section{Inteligência Artificial Explicável como Solução de Governança}
@@ -304,7 +242,7 @@ O problema central que a Inteligência Artificial Explicável busca resolver é 
 
 A proposta da Inteligência Artificial Explicável é atuar como uma ``ponte'' ou uma interface tradutora. Segundo \citeonline{reddyBridgingAIHuman2024}, o objetivo dessa abordagem não é simplificar o modelo matemático em si, o que reduziria sua precisão, mas fornecer uma camada interpretativa capaz de descrever, em termos inteligíveis para humanos, como cada variável pesou na saída do modelo (ex: ``o valor da dívida, acima da média do setor, foi o fator que mais reduziu a probabilidade estimada de pagamento''). Essas explicações são atribuições associativas: descrevem o comportamento do modelo diante de uma entrada, e não a causa real do pagamento ou do inadimplemento do contribuinte \cite{molnarInterpretableMachineLearning}.
 
-No contexto da administração pública, a Inteligência Artificial Explicável deixa de ser apenas uma ferramenta de depuração de código para se tornar um instrumento de governança algorítmica. Ela permite que o Estado mantenha a eficiência da IA enquanto restaura a \textit{accountability} (responsabilização) e o direito ao contraditório, transformando a ``caixa-preta'' em uma ``caixa de vidro'' auditável \cite{raizonvilleBlackBoxGlass2022}.
+No contexto da administração pública, a Inteligência Artificial Explicável deixa de ser apenas uma ferramenta de depuração de código para se tornar um instrumento de governança algorítmica. Ela permite que o Estado mantenha a eficiência da IA enquanto restaura a \textit{accountability} (responsabilização) e o direito ao contraditório, transformando a ``caixa-preta'' em uma ``caixa de vidro'' auditável. \citeonline{raizonvilleBlackBoxGlass2022} mostram, em um modelo econômico, que a regulação por auditorias tende a induzir investimento em explicabilidade, mas também que, quando a explicabilidade facilita a auditoria, uma organização pode preferir a opacidade para encobrir falhas; a explicabilidade, portanto, precisa ser exigida e verificada, e não apenas oferecida.
 
 \subsection{LIME: Aproximação Linear Local por Perturbação}
 \label{subsec:lime}
@@ -426,3 +364,24 @@ A Tabela \ref{tab:shap_vs_lime} consolida as diferenças fundamentais entre as d
 A análise comparativa evidencia que, para o contexto específico da SEFAZ-DF, o \textbf{SHAP apresenta vantagens relevantes}. A reprodutibilidade e as garantias axiomáticas são relevantes quando as explicações podem ser objeto de contestação administrativa ou judicial: um contribuinte que questione seu \textit{rating} tem direito a uma explicação reproduzível e matematicamente fundamentada. Determinismo, contudo, não equivale a robustez. A mesma CDA produz sempre a mesma explicação SHAP, mas essa explicação muda se a referência for outra, e, entre variáveis correlacionadas, a repartição do crédito pode não corresponder à forma como as variáveis se relacionam nos dados \cite{molnarInterpretableMachineLearning}. Por isso, a vantagem do SHAP é condicionada à declaração da referência adotada e à verificação de sua sensibilidade a ela.
 
 Isso não invalida o uso do LIME como ferramenta complementar para análises exploratórias iniciais ou para comunicação simplificada com partes interessadas não técnicas. Contudo, para a documentação oficial e a motivação formal dos atos administrativos de classificação de risco, o SHAP tende a ser a metodologia de referência.
+
+\subsection{Avaliação das Explicações e Limitações de SHAP e LIME}
+\label{subsec:avaliacao_xai}
+
+As propriedades descritas nas seções anteriores não garantem, por si sós, que uma explicação seja boa. A literatura propõe avaliá-las por critérios próprios, distintos da performance do modelo explicado \cite{doshi-velezTowardsRigorousScience2017}. \citeonline{bhattEvaluatingAggregatingFeaturebased2020} agrupam esses critérios em três: a \textbf{fidelidade}, isto é, o quanto as variáveis apontadas como importantes de fato movem a saída do modelo; a \textbf{sensibilidade}, isto é, o quanto a explicação muda diante de pequenas alterações na entrada; e a \textbf{complexidade}, isto é, quantas variáveis são necessárias para entendê-la.
+
+A fidelidade pode ser medida de duas formas. No LIME, o próprio ajuste do modelo substituto local, medido pelo coeficiente de determinação ($R^2$) da regressão ponderada, indica o quanto a aproximação linear reproduz o modelo na vizinhança da instância \cite{ribeiroWhyShouldTrust2016}. Para qualquer método, os testes de deleção e inserção, propostos originalmente para imagens \cite{petsiukRISERandomizedInput2018}, removem ou acrescentam as variáveis na ordem de importância indicada pela explicação e observam a velocidade com que a saída do modelo se altera: quanto mais rápida a mudança, mais a ordem da explicação corresponde ao que o modelo efetivamente usa.
+
+Quanto à estabilidade, \citeonline{alvarezmelisRobustnessInterpretabilityMethods2018} mostraram que explicações pós-hoc, incluindo LIME e SHAP, podem variar de forma acentuada diante de alterações pequenas na entrada, e \citeonline{visaniStatisticalStabilityIndices2022} mostraram que, no LIME, a própria repetição do procedimento sobre a mesma instância pode produzir conjuntos de variáveis e coeficientes diferentes, propondo índices para medir essa variação. O SHAP calculado pelo \textit{TreeExplainer} não varia entre execuções, mas tem fragilidades de outra natureza: o resultado depende da distribuição de referência usada para simular a ausência de uma variável, e, quando as variáveis são dependentes, as aproximações que as tratam como independentes podem avaliar o modelo em combinações de valores que não ocorrem nos dados, distorcendo a atribuição \cite{kumarProblemsShapleyvalueBased2020, aasExplainingIndividualPredictions2021}.
+
+Há ainda dois problemas que afetam diretamente o uso das explicações em auditoria. O primeiro é a discordância entre métodos: \citeonline{krishnaDisagreementProblemExplainable2024} mostraram que diferentes técnicas aplicadas ao mesmo modelo e à mesma instância frequentemente divergem quanto às variáveis mais importantes, à sua ordem e ao sinal de sua contribuição, e que, na prática, os analistas resolvem essa divergência por critérios informais. O segundo é a possibilidade de manipulação: \citeonline{slackFoolingLIMESHAP2020} construíram classificadores que discriminam com base em um atributo sensível e, ainda assim, produzem explicações LIME e SHAP em que esse atributo não aparece, explorando o fato de que ambas as técnicas avaliam o modelo em pontos perturbados fora da distribuição dos dados. Nenhuma técnica de explicação, portanto, é por si só prova de ausência de viés.
+
+Esses critérios orientam a avaliação conduzida neste trabalho: a concordância entre SHAP e LIME é medida explicitamente, a estabilidade do LIME é medida por repetição, e a fidelidade e a sensibilidade à referência são verificadas, conforme descrito no Capítulo \ref{cap:metodologia}.
+
+\subsection{Explicabilidade em Crédito e em Administração Tributária}
+\label{subsec:xai_tributacao}
+
+Em crédito, a combinação de modelos de \textit{gradient boosting} com SHAP já foi aplicada a dados reais de bancos. \citeonline{delangeExplainableAICredit2022} usaram SHAP para explicar um modelo \textit{LightGBM} de concessão de crédito em um banco norueguês, e \citeonline{alonsoUnderstandingPerformance2021}, com dados de um grande banco espanhol, verificaram que modelos de aprendizado de máquina superam a regressão logística em classificação e calibração, mas que os algoritmos mais complexos nem sempre preveem melhor, observação que vai ao encontro da crítica de \citeonline{rudinStopExplainingBlack2019}.
+
+Na administração tributária, as aplicações são mais recentes. \citeonline{gorskiExploringExplainableAI2025} desenvolveram, com dados da administração tributária da Província de Buenos Aires, um protótipo de detecção de fraude fiscal, explicaram suas decisões com diferentes métodos, entre eles SHAP e LIME, e avaliaram as explicações quanto ao poder explicativo e ao cumprimento do dever legal de motivar as decisões da administração tributária. \citeonline{khreisMachineLearningFramework2026} aplicaram XGBoost e SHAP à previsão de atraso no pagamento do imposto de renda de pessoas físicas no Líbano, problema próximo ao da recuperação de créditos inscritos em dívida ativa. Não foi localizado, na literatura consultada, trabalho que compare SHAP e LIME sobre um modelo de classificação de dívida ativa em produção, lacuna que este trabalho busca preencher.
+
