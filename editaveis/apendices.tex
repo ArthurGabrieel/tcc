@@ -2,12 +2,153 @@
 
 \partapendices
 
-\chapter{Primeiro Apêndice}
+\chapter{Algoritmos}
+\label{ap:algoritmos}
 
-Texto do primeiro apêndice.
+Este apêndice descreve, passo a passo, os procedimentos computacionais usados no trabalho. Os parâmetros numéricos estão no Apêndice \ref{ap:parametros}, e os programas que implementam cada procedimento, no Apêndice \ref{ap:reprodutibilidade}.
 
-\chapter{Segundo Apêndice}
+\section{Geração dos dados sintéticos}
+\label{ap:alg_sintese}
 
-Texto do segundo apêndice.
+Para cada \textit{setup} (ICMS, ISS, IPVA, IPTU e Taxas):
+
+\begin{enumerate}
+    \item Carregar a base histórica do imposto e remover as colunas identificadoras e sensíveis (CPF/CNPJ, núcleo do contribuinte, inscrição no CF/DF, placa, número do imóvel e data de nascimento).
+    \item Converter a variável de pagamento para binária: $y = 1$ se houve pagamento e $y = 0$ caso contrário.
+    \item Truncar em zero os valores negativos das variáveis monetárias e aplicar $x' = \ln(1 + x)$ a cada uma delas.
+    \item Declarar o tipo de cada coluna (categórica ou numérica) nos metadados do SDV.
+    \item Ajustar o \textit{GaussianCopulaSynthesizer}: estimar a distribuição marginal $F_j$ de cada coluna, transformar os valores por $z_j = \Phi^{-1}(F_j(x_j))$ e estimar a matriz de correlação $\Sigma$ entre as colunas transformadas.
+    \item Amostrar $N = 50.000$ vetores $z \sim \mathcal{N}(0, \Sigma)$ e voltar à escala original por $x_j = F_j^{-1}(\Phi(z_j))$, com semente fixa.
+    \item Aplicar a inversa $x = e^{x'} - 1$ às variáveis monetárias (truncando em zero) e binarizar de novo a variável de pagamento.
+    \item No IPVA, regenerar a data de nascimento a partir da idade sintética.
+    \item Atribuir a cada linha um identificador de CDA sorteado sem repetição entre todos os \textit{setups}.
+\end{enumerate}
+
+\section{Classificação de uma CDA}
+\label{ap:alg_rating}
+
+Dada uma CDA $x$ e o \textit{setup} $s$:
+
+\begin{enumerate}
+    \item Aplicar o pré-processamento de produção: conversão de tipos, colunas derivadas e substituição das categóricas pelo \textit{target encoding} carregado das tabelas de produção. As colunas categóricas restantes permanecem com tipo categórico, que é a entrada esperada pelos modelos.
+    \item Calcular a probabilidade de pagamento de cada um dos três modelos, $p_1, p_2, p_3$, e a média $p = (p_1 + p_2 + p_3)/3$.
+    \item Normalizar: $\tilde{p} = \min\{\max\{(p - p_{\min}^{s})/(p_{\max}^{s} - p_{\min}^{s}),\ 0{,}0001\},\ 0{,}9999\}$, em que $p_{\min}^{s}$ e $p_{\max}^{s}$ são os limites operacionais do \textit{setup}, definidos no sistema de produção e não divulgados neste trabalho.
+    \item Atribuir a classe pelas faixas da Tabela \ref{tab:faixas_rating}: A se $\tilde{p} \ge 0{,}50$; B se $0{,}25 \le \tilde{p} < 0{,}50$; C se $0{,}03 \le \tilde{p} < 0{,}25$; D caso contrário.
+    \item Se a situação da CDA indicar parcelamento ou exigibilidade suspensa, substituir a classe por A (regra de negócio).
+\end{enumerate}
+
+\section{Explicações SHAP e LIME}
+\label{ap:alg_explicacoes}
+
+\textbf{SHAP.} Para cada modelo $m \in \{1, 2, 3\}$ do \textit{setup}, o \textit{TreeExplainer} calcula os valores $\phi_i^{(m)}(x)$ na escala de log-odds, no modo \textit{tree\_path\_dependent}, sobre a CDA no mesmo formato de entrada da produção. A explicação do \textit{ensemble} é $\phi_i(x) = \frac{1}{3}\sum_m \phi_i^{(m)}(x)$, com valor base $\phi_0 = \frac{1}{3}\sum_m \phi_0^{(m)}$. Como o valor de Shapley é linear, $\phi_i(x)$ é exatamente a contribuição de cada variável para o log-odds médio $g(x) = \frac{1}{3}\sum_m \mathrm{logit}(p_m(x))$, e vale $\phi_0 + \sum_i \phi_i(x) = g(x)$.
+
+\textbf{LIME.} Para explicar a CDA $x$:
+\begin{enumerate}
+    \item Representar as CDAs como vetores numéricos, com as categóricas codificadas por inteiros e os ausentes por $-1$.
+    \item Declarar como categóricas as colunas de tipo categórico ou com até 12 valores distintos.
+    \item Gerar 1.000 vizinhos de $x$: nas variáveis contínuas, ruído gaussiano com o desvio padrão da amostra, centrado em $x$; nas categóricas, valores sorteados segundo a frequência na amostra.
+    \item Reconverter cada vizinho para o formato de entrada da produção e calcular $g(z)$, o mesmo alvo do SHAP.
+    \item Ponderar os vizinhos pelo \textit{kernel} exponencial da distância a $x$ e ajustar uma regressão linear ponderada com até 12 variáveis. Os coeficientes são a explicação, e o $R^2$ ponderado do ajuste mede a fidelidade local.
+\end{enumerate}
+
+\section{Seleção dos casos}
+\label{ap:alg_casos}
+
+Para cada \textit{setup}, excluem-se as CDAs cuja classe A foi atribuída pela regra de negócio. Na comparação com um caso por classe, escolhe-se em cada classe a CDA cuja $\tilde{p}$ está mais próxima da mediana da classe (amostra de 5.000 CDAs). Na comparação ampliada, sorteiam-se até 100 CDAs por classe entre as 50.000 (semente 42).
+
+\section{Métricas de concordância}
+\label{ap:alg_concordancia}
+
+Sejam $S_5$ e $L_5$ as cinco variáveis de maior $|\phi_i|$ no SHAP e de maior $|$coeficiente$|$ no LIME, em ordem decrescente.
+
+\begin{itemize}
+    \item \textit{Jaccard}@5: $J = |S_5 \cap L_5| / |S_5 \cup L_5|$.
+    \item RBO@5 truncado, com $p = 0{,}9$: $\mathrm{RBO} = (1 - p)\sum_{d=1}^{5} p^{d-1}\,|S_{1:d} \cap L_{1:d}|/d$. A versão normalizada divide esse valor pelo seu máximo, $1 - p^5 = 0{,}40951$, e varia de 0 a 1.
+    \item Estabilidade do LIME: explicar a mesma CDA 30 vezes, com sementes de 42 a 71, e tirar a média do \textit{Jaccard}@5 entre os 435 pares de execuções.
+\end{itemize}
+
+\section{Testes de deleção e inserção}
+\label{ap:alg_delecao}
+
+Para uma CDA $x$, uma ordem $\pi$ das $K$ variáveis (dada pelo SHAP, pelo LIME ou sorteada) e um fundo $B$ de 50 CDAs sorteadas:
+
+\begin{enumerate}
+    \item Para $k = 0, \dots, K$, construir $|B|$ cópias de $x$ em que as $k$ primeiras variáveis de $\pi$ são substituídas pelos valores de cada CDA de $B$, e calcular a média de $g$ sobre as cópias: $D_k$ (deleção).
+    \item Para $k = 0, \dots, K$, partir das CDAs de $B$ e substituir nelas as $k$ primeiras variáveis de $\pi$ pelos valores de $x$, e calcular a média de $g$: $I_k$ (inserção).
+    \item Calcular as áreas, com o eixo horizontal $k/K$ e a regra do trapézio: $A_D$ de $|D_k - g(x)|$ (maior indica explicação mais fiel) e $A_I$ de $|I_k - g(x)|$ (menor indica explicação mais fiel).
+\end{enumerate}
+
+\section{Intervalos de confiança}
+\label{ap:alg_ic}
+
+Para uma métrica observada em $n$ unidades (casos explicados ou sementes de treino): sortear com reposição $n$ unidades, calcular a média e repetir o procedimento 10.000 vezes. O intervalo de confiança de 95\% é dado pelos percentis 2,5 e 97,5 dessas médias (\textit{bootstrap} percentil).
+
+\section{Experimento de desbalanceamento}
+\label{ap:alg_desbalanceamento}
+
+\begin{enumerate}
+    \item Dividir as CDAs sintéticas do IPTU em treino (70\%) e teste (30\%), estratificando por grupo (PJ ou PF) e por pagamento.
+    \item Para cada variante, fração $f \in \{1; 0{,}5; 0{,}25; 0{,}10; 0{,}05\}$ e semente: manter no treino apenas a fração $f$ das CDAs de PJ (variante 1) ou das CDAs pagas de PJ (variante 2).
+    \item Treinar o modelo substituto com a variável \texttt{se\_cnpj} entre as entradas (versão direta) ou sem ela (versão por \textit{proxy}).
+    \item No teste, com decisão favorável definida como probabilidade $\ge 0{,}25$, calcular: $\mathrm{SPD} = P(\hat Y{=}1\mid \mathrm{PF}) - P(\hat Y{=}1\mid \mathrm{PJ})$; $\mathrm{EOD} = P(\hat Y{=}1\mid Y{=}1,\mathrm{PF}) - P(\hat Y{=}1\mid Y{=}1,\mathrm{PJ})$; $\mathrm{DI} = P(\hat Y{=}1\mid \mathrm{PJ}) / P(\hat Y{=}1\mid \mathrm{PF})$; a AUC por grupo; e a contribuição SHAP média de cada variável nas CDAs de PJ. Repetir com os limiares 0,20 e 0,30.
+    \item Nos cenários com 100\%, 50\% e 5\% dos pagadores PJ, explicar com o LIME 100 CDAs de PJ do teste e registrar a frequência de cada variável no \textit{top}-5.
+\end{enumerate}
+
+\chapter{Parâmetros}
+\label{ap:parametros}
+
+Os hiperparâmetros dos modelos XGBoost de produção e os limites da normalização de cada \textit{setup} são detalhes do sistema da SEFAZ-DF e não são divulgados. Em termos gerais, cada \textit{setup} usa três modelos de \textit{gradient boosting} com o mesmo conjunto de hiperparâmetros, objetivo de classificação binária (\texttt{binary:logistic}) e variáveis categóricas tratadas nativamente pela biblioteca. Os modelos foram usados exatamente como estão em produção, sem retreinamento. A Tabela \ref{tab:ap_parametros} traz os parâmetros das etapas conduzidas neste trabalho.
+
+\begin{table}[H]
+    \centering
+    \caption[Parâmetros da síntese, das explicações e dos experimentos]{Parâmetros da síntese de dados, das técnicas de explicação e dos experimentos.}
+    \label{tab:ap_parametros}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.2cm}L}
+        \toprule
+        \textbf{Etapa} & \textbf{Parâmetros} \\
+        \midrule
+        Síntese (SDV) & \textit{GaussianCopulaSynthesizer} com configuração padrão; 50.000 linhas por \textit{setup}; semente 42; $\ln(1+x)$ nas variáveis monetárias (valor corrigido da dívida, multa, dívida total do CPF/CNPJ, valor de aquisição do veículo, valor do terreno, valor do m\textsuperscript{2} construído e base de cálculo do IPTU). \\
+        SHAP & \textit{TreeExplainer}, modo \textit{tree\_path\_dependent}, saída em log-odds; média dos três modelos. \\
+        LIME & \textit{LimeTabularExplainer}; modo regressão sobre o log-odds médio; 1.000 perturbações; até 12 variáveis; sem discretização das contínuas; amostragem em torno da CDA; categóricas declaradas (tipo categórico ou até 12 valores); largura do \textit{kernel} padrão ($0{,}75\sqrt{K}$). \\
+        Comparação SHAP $\times$ LIME & \textit{top}-5; RBO com $p = 0{,}9$; 30 execuções do LIME por caso (sementes 42 a 71); 1 caso por classe (amostra de 5.000) ou até 100 casos por classe (base de 50.000). \\
+        Deleção e inserção & Fundo de 50 CDAs sorteadas (semente 42); ordem aleatória como controle. \\
+        Sensibilidade ao fundo & SHAP por permutação (\textit{PermutationExplainer}, 500 avaliações); fundos de 100 CDAs (três sorteios), de 500 CDAs, só de classes A/B e só de classes C/D; 5 casos por classe e \textit{setup}. \\
+        Modelo substituto & XGBoost com 300 árvores, profundidade máxima 6, taxa de aprendizado 0,05, \textit{subsample} 0,8, \textit{colsample\_bytree} 0,9; treino/teste 70/30; 20 sementes por cenário. \\
+        Intervalos de confiança & \textit{Bootstrap} percentil com 10.000 reamostragens; nível de 95\%. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\chapter{Reprodutibilidade}
+\label{ap:reprodutibilidade}
+
+As análises foram implementadas em Python 3.11, com as bibliotecas SDV 1.35.1, XGBoost 3.2.0, shap 0.51.0, lime 0.2.0.1, scikit-learn 1.8.0, pandas 2.3.3 e NumPy 2.4.4. Todas as etapas aleatórias usam sementes fixas, indicadas no Apêndice \ref{ap:parametros}.
+
+O código está em um repositório privado, \texttt{XAI-Raiting}, disponível à banca mediante solicitação. Por sigilo fiscal e pela LGPD, não são distribuídos os modelos de produção, as tabelas de \textit{target encoding}, os limites operacionais de cada imposto nem a base real. Com esses arquivos, que permanecem no ambiente institucional, os programas da Tabela \ref{tab:ap_programas} reproduzem todos os resultados a partir das bases sintéticas.
+
+\begin{table}[H]
+    \centering
+    \caption[Programas que reproduzem cada resultado]{Programas do repositório que reproduzem cada resultado do trabalho.}
+    \label{tab:ap_programas}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.2cm}L}
+        \toprule
+        \textbf{Programa} & \textbf{Resultado} \\
+        \midrule
+        \texttt{data\_generate\_gaussian\_log.py} & Bases sintéticas (exige a base real). \\
+        \textit{Notebook} \texttt{comparar\_sintetizadores.ipynb} & Comparação dos quatro sintetizadores (exige a base real). \\
+        \texttt{fidelidade\_real\_sintetico.py} & Combinações raras ou impossíveis, correlações e distância ao registro mais próximo (exige a base real; grava só agregados). \\
+        \texttt{figuras\_monografia.py} & Importância global, explicação local do \textit{rating} D e mapa de estabilidade do LIME no ICMS. \\
+        \texttt{compare\_shap\_lime.py} & Comparação SHAP $\times$ LIME, estabilidade e $R^2$ do LIME. \\
+        \texttt{ic\_metricas.py} & Intervalos de confiança da comparação. \\
+        \texttt{delecao\_insercao.py} & Testes de deleção e inserção. \\
+        \texttt{sensibilidade\_fundo\_shap.py} & Sensibilidade do SHAP ao conjunto de fundo. \\
+        \texttt{experimento\_desbalanceamento.py} e \texttt{plot\_desbalanceamento.py} & Experimento de desbalanceamento (versões direta e por \textit{proxy}) e sua figura. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
 
 \end{apendicesenv}
