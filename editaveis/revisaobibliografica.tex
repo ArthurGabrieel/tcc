@@ -101,12 +101,6 @@ Nesse contexto, o XGBoost diferencia-se do \textit{Gradient Boosting} tradiciona
     \item \textbf{Processamento Paralelo:} Embora o Boosting seja sequencial, o XGBoost paraleliza a construção de cada árvore, permitindo treinar modelos em milhões de registros de dívida ativa com rapidez.
 \end{enumerate}
 
-\subsection{LightGBM: Eficiência e Escalabilidade}
-Embora a SEFAZ-DF utilize prioritariamente o XGBoost, a literatura recente aponta o \textbf{LightGBM} (\textit{Light Gradient Boosting Machine}), desenvolvido pela Microsoft, como uma alternativa eficiente, frequentemente utilizada em conjunto para validação cruzada \cite{ke2017lightgbm}.
-
-A principal diferença do LightGBM é a estratégia de crescimento da árvore. Enquanto o XGBoost cresce a árvore por níveis (\textit{level-wise}), o LightGBM cresce por folhas (\textit{leaf-wise}), expandindo apenas o ramo que resulta na maior redução da perda. Isso torna o LightGBM mais rápido e capaz de lidar com volumes massivos de dados, embora exija maior cuidado com a configuração de hiperparâmetros para evitar sobreajuste em conjuntos de dados menores \cite{changCreditRiskPrediction2024}. Embora o LightGBM seja apresentado como referência técnica relevante, sua implementação experimental não faz parte do escopo deste trabalho, que se concentra na validação do modelo baseado em XGBoost e na aplicação de técnicas de explicabilidade.
-
-
 \section{Acurácia, Interpretabilidade e Opacidade Algorítmica na Administração Tributária}
 \label{sec:tradeoff}
 
