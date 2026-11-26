@@ -101,6 +101,15 @@ Os dados que alimentam o Rating contêm informações protegidas pelo sigilo fis
 
 Os dados reais foram usados em apenas dois momentos: para ajustar os sintetizadores e para medir a fidelidade dos dados gerados. Eles não foram submetidos ao modelo nem às técnicas de explicação. Os dados sintéticos servem aqui como entradas plausíveis para o modelo de produção. A variável de pagamento gerada pelo sintetizador não reproduz com fidelidade a relação entre as características da CDA e o pagamento observado e, por isso, não foi tratada como verdade. As explicações descrevem, portanto, como o modelo real decide diante de casos verossímeis; elas não descrevem o comportamento real dos contribuintes.
 
+\subsection{Aspectos Éticos e Autorização}
+\label{subsec:etica}
+
+O modelo de produção e a base de CDAs são de propriedade da SEFAZ-DF e estão sujeitos ao sigilo fiscal (art. 198 do Código Tributário Nacional) e à LGPD. Seu uso nesta pesquisa foi autorizado pela SEFAZ-DF \textbf{[PREENCHER: documento, número e data da autorização; reproduzir no Anexo A]}.
+
+A base real nunca saiu do ambiente institucional em que está armazenada. Os autores a acessaram nesse ambiente com três finalidades, e só elas: ajustar os sintetizadores, medir a fidelidade dos dados gerados e verificar o risco de vazamento. Desses passos saíram apenas os parâmetros dos sintetizadores e contagens agregadas; nenhum registro real, nem extrato dele, consta deste trabalho ou do código que o acompanha. O modelo de produção, as tabelas de \textit{target encoding} e os limites operacionais de cada imposto também permanecem no ambiente da SEFAZ-DF e não são divulgados.
+
+Dados sintéticos não eliminam por si só o risco à privacidade. Um sintetizador que memorize a base pode gerar registros muito próximos de contribuintes reais, sobretudo os de perfil raro, e permitir inferir que uma pessoa consta da base. Por isso, o risco de vazamento foi medido pela distância de cada CDA sintética à CDA real mais próxima, comparada à mesma distância para CDAs reais fora da referência. Mesmo assim, as bases sintéticas são tratadas como material restrito: não são publicadas com este trabalho e ficam disponíveis à banca apenas mediante solicitação.
+
 \subsection{Algoritmos de Síntese Avaliados}
 
 Foram avaliados três algoritmos da biblioteca \textit{Synthetic Data Vault} (SDV) \cite{patkiSyntheticDataVault2016}, que representam as três famílias mais usadas para dados tabulares:
