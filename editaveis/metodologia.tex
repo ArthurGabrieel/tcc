@@ -9,9 +9,9 @@ A execução do trabalho foi organizada em seis etapas sequenciais:
 
 \begin{enumerate}
     \item \textbf{Reprodução do pipeline de produção:} reconstrução, fora do ambiente institucional, da cadeia completa que transforma os dados de uma Certidão de Dívida Ativa (CDA) em um \textit{rating}, incluindo pré-processamento, \textit{target encoding}, \textit{ensemble} de modelos e regras de pós-processamento.
-    \item \textbf{Geração e validação de dados sintéticos:} treinamento de sintetizadores sobre a base histórica de cada imposto, comparação de quatro estratégias de síntese e escolha da mais fiel à distribuição real.
+    \item \textbf{Geração e validação de dados sintéticos:} treinamento de sintetizadores sobre a base histórica de cada imposto, comparação de quatro estratégias de síntese, escolha da mais fiel à distribuição real e verificação da fidelidade conjunta e do risco de vazamento da estratégia escolhida.
     \item \textbf{Aplicação das técnicas de explicabilidade:} cálculo de explicações globais e locais com SHAP e de explicações locais com LIME sobre o \textit{ensemble} de produção.
-    \item \textbf{Comparação entre SHAP e LIME:} medição da concordância entre os dois métodos e da estabilidade do LIME em execuções repetidas.
+    \item \textbf{Comparação entre SHAP e LIME:} medição da concordância entre os dois métodos, da estabilidade e da fidelidade local do LIME, da fidelidade das duas explicações por testes de deleção e inserção e da sensibilidade do SHAP ao conjunto de referência.
     \item \textbf{Experimento de desbalanceamento:} treinamento controlado de um modelo substituto sob diferentes níveis de desbalanceamento micro, para medir o efeito sobre a performance do modelo e sobre as métricas de viés.
     \item \textbf{Consolidação da estrutura visual de apoio:} organização dos resultados em gráficos e tabelas voltados ao auditor fiscal.
 \end{enumerate}
@@ -24,7 +24,7 @@ O Rating da SEFAZ-DF é calculado separadamente para cinco grupos de tributos, d
 A classificação de uma CDA segue quatro passos, todos reproduzidos fielmente:
 
 \begin{enumerate}
-    \item \textbf{Pré-processamento:} conversão de tipos, derivação de colunas auxiliares e substituição de variáveis categóricas pelo seu \textit{target encoding}, isto é, pela taxa histórica de pagamento associada a cada categoria, suavizada em direção à taxa média geral quando a categoria tem poucas ocorrências. As tabelas de codificação foram carregadas dos mesmos arquivos usados em produção.
+    \item \textbf{Pré-processamento:} conversão de tipos, derivação de colunas auxiliares e substituição de variáveis categóricas pelo seu \textit{target encoding}, isto é, pela taxa histórica de pagamento associada a cada categoria, suavizada em direção à taxa média geral quando a categoria tem poucas ocorrências. As tabelas de codificação foram carregadas dos mesmos arquivos usados em produção. As variáveis categóricas que não passam pelo \textit{target encoding} entram nos modelos com o tipo categórico nativo da biblioteca XGBoost. Esse detalhe importa: se as categorias forem informadas como números, os modelos tomam outras decisões, e a classe da CDA muda em cerca de 10\% dos casos. Por isso, todas as predições e explicações deste trabalho usam exatamente o formato de entrada da produção.
     \item \textbf{Predição do \textit{ensemble}:} cada um dos três modelos estima a probabilidade de pagamento da CDA, e a predição final é a média aritmética das três probabilidades.
     \item \textbf{Normalização:} a probabilidade média $p$ é reescalada para o intervalo $[0,1]$ pela normalização \textit{min-max} com os limites operacionais de cada \textit{setup}, $\tilde{p} = (p - p_{\min}) / (p_{\max} - p_{\min})$, e limitada ao intervalo $[0{,}0001;\ 0{,}9999]$.
     \item \textbf{Atribuição do \textit{rating}:} a probabilidade normalizada é convertida em classe pelas faixas da Tabela \ref{tab:faixas_rating}. Há ainda uma regra de negócio que se sobrepõe ao modelo: CDAs parceladas ou com exigibilidade suspensa, identificadas pela variável \texttt{situacao\_inicial}, recebem \textit{rating} A independentemente da probabilidade estimada.
@@ -172,26 +172,65 @@ Sem a transformação logarítmica, a cópula gaussiana errou a mediana das vari
 
 Dois pontos de baixa fidelidade foram identificados e são considerados nas limitações do trabalho. Primeiro, a data de nascimento do IPVA apresenta TVD próxima de 1 em todas as estratégias, o que é esperado, pois a coluna foi regenerada a partir da idade (passo 8) e a TVD não é uma métrica adequada para datas com centenas de valores distintos. Segundo, a variável \texttt{situacao\_inicial} do \textit{setup} Taxas apresentou TVD de 0,87 na estratégia escolhida, o que indica que a proporção de CDAs parceladas ou suspensas nesse imposto não foi bem preservada; como essa variável aciona a regra de \textit{rating} A forçado, a distribuição de \textit{ratings} das Taxas deve ser lida com cautela.
 
+\subsection{Fidelidade Conjunta e Risco de Vazamento}
+\label{subsec:fidelidade_conjunta}
+
+Os três critérios anteriores avaliam cada variável isoladamente. Como as explicações dependem também da relação entre as variáveis, a estratégia escolhida foi submetida a duas verificações adicionais, executadas pelos autores no ambiente em que a base real está armazenada e registradas apenas na forma de contagens agregadas:
+
+\begin{itemize}
+    \item \textbf{Combinações raras ou impossíveis:} as variáveis numéricas foram divididas em decis calculados na base real, e as categóricas mantidas como estão. Para cada par de variáveis, contou-se a fração das CDAs sintéticas cuja combinação de valores não aparece na base real (combinação impossível) ou aparece em menos de 0,1\% das CDAs reais (combinação rara). Mediu-se também a diferença entre as correlações de Spearman de cada par de variáveis numéricas na base real e na sintética.
+    \item \textbf{Distância ao registro mais próximo} (DCR, do inglês \textit{distance to closest record}): para cada CDA sintética, calculou-se a distância à CDA real mais próxima, em um espaço em que as numéricas são representadas pelo seu quantil na base real e as categóricas por indicadores binários. A mesma distância foi calculada para CDAs reais que ficaram fora da referência (\textit{holdout}). Se o sintetizador estivesse copiando registros, as CDAs sintéticas ficariam tão perto da base real quanto as reais, ou mais perto, e haveria cópias exatas.
+\end{itemize}
+
+Como referência, o mesmo procedimento foi aplicado comparando duas metades da própria base sintética, situação em que as duas amostras vêm da mesma distribuição. Nesse caso, a fração média de CDAs em combinações impossíveis por par ficou abaixo de 0,1\%, e a diferença média de correlação, em torno de 0,01. A Tabela \ref{tab:fidelidade_conjunta} resume os resultados com a base real.
+
+\begin{table}[H]
+    \centering
+    \caption[Fidelidade conjunta e risco de vazamento dos dados sintéticos]{Fidelidade conjunta e risco de vazamento da estratégia \textit{GaussianCopula}+log, por \textit{setup}. A segunda coluna é a fração das CDAs sintéticas com ao menos um par de variáveis em combinação inexistente na base real; a terceira, a média dessa fração entre todos os pares. A diferença de correlação é a média, entre os pares de variáveis numéricas, da diferença absoluta entre as correlações de Spearman na base real e na sintética. O DCR é a mediana da distância de cada CDA à CDA real mais próxima, para as CDAs sintéticas e para CDAs reais fora da referência.}
+    \label{tab:fidelidade_conjunta}
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{1.6cm}CCCCC}
+        \toprule
+        \textbf{\textit{Setup}} & \textbf{CDAs com algum par impossível} & \textbf{Par impossível (média)} & \textbf{Diferença de correlação (média)} & \textbf{DCR sintético (mediana)} & \textbf{DCR real \textit{holdout} (mediana)} \\
+        \midrule
+        ICMS  & 94,6\% & 1,3\% & 0,13 & 2,32 & 0,19 \\
+        ISS   & 79,9\% & 0,9\% & 0,10 & 1,75 & 0,18 \\
+        IPVA  & 86,0\% & 4,6\% & 0,08 & 1,81 & 0,60 \\
+        IPTU  & 99,8\% & 8,3\% & 0,06 & 1,82 & 0,48 \\
+        Taxas & 93,2\% & 9,0\% & 0,17 & 1,70 & 0,00 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Os resultados têm duas leituras. Quanto à privacidade, nenhuma CDA sintética é cópia de uma CDA real, e as sintéticas estão, em mediana, muito mais distantes da base real do que as próprias CDAs reais entre si; não há indício de que o sintetizador tenha memorizado registros. Quanto à fidelidade, porém, a cópula gaussiana não preserva as relações entre variáveis: entre 80\% e quase 100\% das CDAs sintéticas apresentam ao menos uma combinação que não ocorre na base real, e as correlações diferem, em média, de 0,06 a 0,17. Os pares mais afetados correspondem a regras lógicas que o sintetizador não conhece, como a regularização do devedor em um ano e em cinco anos no ICMS (32\% das CDAs sintéticas em combinação impossível), o cadastro ativo e o número de inscrições ativas no ISS (30\%), a situação da CDA e as dívidas abertas da placa no IPVA (66\%) e a situação da CDA e o pagamento nas Taxas (90\%), este último coerente com a TVD de 0,87 já observada.
+
+Em consequência, as CDAs sintéticas são plausíveis variável a variável, mas não reproduzem contribuintes realistas em seu conjunto. As explicações produzidas neste trabalho descrevem, portanto, como o modelo de produção decide diante de entradas plausíveis coluna a coluna, e não como ele decide sobre a população real de contribuintes.
+
 \section{Procedimentos de Explicabilidade}
 \label{sec:procedimentos_xai}
 
 \subsection{Explicações com SHAP}
 
-Os valores SHAP foram calculados com o \textit{TreeExplainer}, que obtém os valores de Shapley exatos para modelos de árvore \cite{lundbergUnifiedApproachInterpreting2017}. Como a biblioteca não explica um \textit{ensemble} de modelos diretamente, o cálculo foi feito separadamente em cada um dos três modelos XGBoost do \textit{setup}, e os três vetores de contribuições foram combinados pela média aritmética, de forma análoga à combinação das predições. Os valores são expressos na escala interna do XGBoost (logaritmo da razão de chances de pagamento), na qual as contribuições são aditivas.
+Os valores SHAP foram calculados com o \textit{TreeExplainer}, que obtém os valores de Shapley exatos para modelos de árvore \cite{lundbergUnifiedApproachInterpreting2017}, sobre a CDA no mesmo formato de entrada da produção. Como a biblioteca não explica um \textit{ensemble} de modelos diretamente, o cálculo foi feito separadamente em cada um dos três modelos XGBoost do \textit{setup}, e os três vetores de contribuições, assim como os três valores base, foram combinados pela média aritmética. Os valores são expressos na escala interna do XGBoost (logaritmo da razão de chances de pagamento, ou log-odds). Como o valor de Shapley é linear, a média das contribuições dos três modelos é exatamente a contribuição de cada variável para o log-odds médio do \textit{ensemble}: a soma das contribuições com o valor base reproduz esse log-odds, o que foi conferido numericamente em todas as CDAs explicadas.
+
+O \textit{TreeExplainer} foi usado no modo \textit{tree\_path\_dependent}, o único compatível com as variáveis categóricas nativas dos modelos de produção. Nesse modo, a ausência de uma variável é simulada pela proporção de casos de treinamento que seguiu cada ramo das árvores; a referência da explicação é, portanto, a distribuição dos dados de treinamento do modelo, e não um conjunto de fundo escolhido pelo analista. O efeito dessa escolha é medido na Seção \ref{subsec:sensibilidade_fundo}.
 
 A partir desses valores foram produzidos: (i) a importância global de cada variável, dada pela média do valor absoluto de SHAP sobre a amostra; (ii) o desvio padrão e o coeficiente de variação dessa importância entre os três modelos, para avaliar a coerência interna do \textit{ensemble}; e (iii) explicações locais na forma de \textit{waterfall plots} e \textit{decision plots}.
 
 \subsection{Explicações com LIME}
 
-As explicações LIME foram geradas com o \textit{LimeTabularExplainer}, tendo como função a ser explicada a cadeia completa de predição do \textit{ensemble}, incluindo a normalização. Para cada explicação, o LIME gerou 1.000 perturbações em torno da CDA analisada e ajustou um modelo linear local com até 12 variáveis, mantendo as variáveis contínuas sem discretização. A distribuição usada para gerar as perturbações foi a própria amostra sintética do \textit{setup}.
+As explicações LIME foram geradas com o \textit{LimeTabularExplainer}, no modo de regressão, tendo como função a ser explicada o mesmo alvo do SHAP: o log-odds médio dos três modelos. Assim, as diferenças entre as duas técnicas não decorrem de explicarem quantidades diferentes. Para cada explicação, o LIME gerou 1.000 perturbações em torno da CDA analisada: nas variáveis contínuas, ruído gaussiano centrado no valor da própria CDA, com o desvio padrão da amostra sintética; nas variáveis categóricas (as de tipo categórico e as que têm até 12 valores distintos), valores sorteados segundo a frequência de cada categoria na amostra. Cada perturbação foi reconvertida para o formato de entrada da produção antes de ser submetida aos modelos. Sobre essas perturbações, ponderadas pela proximidade à CDA original, o LIME ajustou um modelo linear com até 12 variáveis, sem discretizar as contínuas. O coeficiente de determinação ($R^2$) desse ajuste foi registrado como medida da fidelidade local da explicação: indica quanto do comportamento do modelo na vizinhança da CDA é capturado pela aproximação linear.
 
 \subsection{Seleção dos Casos Analisados}
 
-As análises globais com SHAP usaram as 50.000 CDAs sintéticas de cada \textit{setup}. Para a comparação local entre SHAP e LIME, sorteou-se uma amostra de 5.000 CDAs sintéticas por \textit{setup} (semente 42) e, nela, selecionou-se uma CDA representativa de cada classe de \textit{rating}: aquela cuja probabilidade normalizada é a mais próxima da mediana das probabilidades do grupo. O critério evita casos extremos ou atípicos e resultou em 20 casos (cinco \textit{setups} $\times$ quatro classes). Na classe A, o grupo inclui tanto CDAs classificadas pelo modelo quanto CDAs que receberam A pela regra de parcelamento ou suspensão, de modo que o caso escolhido pode ter probabilidade abaixo de 0,50.
+As análises globais com SHAP usaram as 50.000 CDAs sintéticas de cada \textit{setup}. Nas análises locais, foram excluídas as CDAs que receberam \textit{rating} A pela regra de parcelamento ou suspensão: nelas a classe não foi decidida pelo modelo, e explicá-las como decisão do modelo não faria sentido. No ICMS, essas CDAs são 5.245 das 6.894 com \textit{rating} A.
+
+Foram usados dois conjuntos de casos. Para as ilustrações (gráficos de cascata e mapas de estabilidade), selecionou-se em cada classe a CDA cuja probabilidade normalizada é a mais próxima da mediana da classe, o que evita casos extremos ou atípicos. Para a comparação quantitativa entre SHAP e LIME, sortearam-se, entre as 50.000 CDAs de cada \textit{setup} (semente 42), 100 CDAs por classe de \textit{rating}, o que resultou em 1.952 casos: 400 por \textit{setup}, exceto nas Taxas, em que a classe D tem apenas 52 CDAs decididas pelo modelo. O sorteio, em vez de 100 CDAs próximas da mediana, garante que os casos representem a variedade de cada classe.
 
 \subsection{Métricas de Comparação}
 
-Para cada caso, compararam-se as cinco variáveis mais relevantes segundo cada método (\textit{top-5}), ordenadas pelo valor absoluto da contribuição. Foram utilizadas três medidas:
+Para cada caso, compararam-se as cinco variáveis mais relevantes segundo cada método (\textit{top-5}), ordenadas pelo valor absoluto da contribuição. Foram utilizadas três medidas de concordância e estabilidade:
 
 \begin{itemize}
     \item \textbf{\textit{Jaccard}@5:} proporção de variáveis em comum entre os dois \textit{top-5}, sem considerar a ordem. Varia de 0 (nenhuma variável em comum) a 1 (mesmo conjunto):
@@ -203,11 +242,27 @@ Para cada caso, compararam-se as cinco variáveis mais relevantes segundo cada m
     \begin{equation}
         RBO@5 = (1 - p) \sum_{d=1}^{5} p^{\,d-1} \frac{|S_{1:d} \cap L_{1:d}|}{d}
     \end{equation}
-    em que $S_{1:d}$ e $L_{1:d}$ são as $d$ primeiras variáveis de cada lista. Nessa forma truncada, o valor máximo, obtido quando as duas listas são idênticas, é $0{,}4095$, e não 1. Os valores de RBO@5 reportados no Capítulo \ref{cap:resultados_analise} devem ser lidos em relação a esse teto.
+    em que $S_{1:d}$ e $L_{1:d}$ são as $d$ primeiras variáveis de cada lista. Nessa forma truncada, o valor máximo, obtido quando as duas listas são idênticas, é $1 - p^5 = 0{,}4095$. Para facilitar a leitura, os valores reportados são divididos por esse máximo, de modo que o RBO@5 normalizado varia de 0 a 1.
     \item \textbf{Estabilidade do LIME:} cada caso foi explicado 30 vezes pelo LIME, variando apenas a semente aleatória (de 42 a 71). Calculou-se o \textit{Jaccard}@5 entre todos os 435 pares de execuções e tomou-se a média. Registraram-se também o número de variáveis distintas que apareceram no \textit{top-5} ao longo das 30 execuções e a frequência da variável mais recorrente.
 \end{itemize}
 
-O SHAP não foi submetido ao teste de estabilidade porque o \textit{TreeExplainer} é determinístico: a mesma CDA produz sempre a mesma explicação.
+O SHAP não foi submetido a esse teste de repetição porque o \textit{TreeExplainer} é determinístico: a mesma CDA produz sempre a mesma explicação. Determinismo, contudo, não garante robustez, pois a explicação depende da referência adotada; essa dependência é medida na Seção \ref{subsec:sensibilidade_fundo}.
+
+\subsection{Fidelidade das Explicações: Deleção e Inserção}
+\label{subsec:delecao_insercao}
+
+Concordância entre SHAP e LIME não indica qual das duas explicações está correta. Para medir se a ordem de importância de cada método acompanha o que de fato move o modelo, aplicaram-se testes de deleção e inserção aos 1.952 casos. Para cada CDA $x$ e cada ordem de variáveis (a do SHAP, a do LIME e uma ordem aleatória, usada como controle), as variáveis foram ``apagadas'' uma a uma, da mais para a menos importante, e a saída do modelo foi registrada a cada passo (deleção); no teste inverso, partiu-se de todas as variáveis apagadas e elas foram devolvidas na mesma ordem (inserção). Apagar uma variável significa substituí-la pelos valores de 50 CDAs sorteadas da base e tomar a média das 50 saídas, o que evita gerar casos impossíveis e funciona com variáveis categóricas.
+
+Com o eixo horizontal dado pela fração de variáveis apagadas ou inseridas, calcularam-se as áreas sob as curvas de $|D_k - g(x)|$ e $|I_k - g(x)|$, em que $g(x)$ é o log-odds da CDA original e $D_k$ e $I_k$ são as saídas após $k$ passos. Na deleção, área maior indica que a ordem do método afasta a predição mais depressa, ou seja, que as variáveis apontadas como mais importantes são de fato as que mais pesam; na inserção, área menor indica o mesmo. Além das médias, registrou-se em quantos casos cada método supera os demais. Esses testes favorecem, em alguma medida, o SHAP, porque a noção de ``variável ausente'' que usam é próxima da que define os valores de Shapley; por isso a ordem aleatória é o termo de comparação principal.
+
+\subsection{Sensibilidade do SHAP ao Conjunto de Referência}
+\label{subsec:sensibilidade_fundo}
+
+Como o \textit{TreeExplainer} no modo usado não admite um conjunto de fundo, a sensibilidade do SHAP à referência foi avaliada com uma versão agnóstica, o SHAP por permutação (\textit{PermutationExplainer}, com 500 avaliações do modelo por CDA), que chama o \textit{ensemble} pelo mesmo formato de entrada da produção. Em 100 casos (cinco por classe e \textit{setup}, sorteados entre os 1.952), essa versão foi calculada com sete configurações: três sorteios independentes de 100 CDAs como fundo; o primeiro desses fundos com outra semente de permutação, para medir o ruído do próprio estimador; um fundo de 500 CDAs; e fundos de 100 CDAs compostos apenas por CDAs de classes A ou B, ou apenas de classes C ou D. Cada configuração foi comparada com o \textit{TreeExplainer} e com o primeiro fundo sorteado, pelo \textit{Jaccard}@5 e pela correlação de Spearman entre os valores absolutos das contribuições.
+
+\subsection{Intervalos de Confiança}
+
+As métricas são apresentadas com intervalo de confiança de 95\%, obtido por \textit{bootstrap} percentil com 10.000 reamostragens das unidades de análise (os casos explicados, nas comparações entre técnicas; as sementes de treinamento, no experimento da Seção \ref{sec:experimento_desbalanceamento}).
 
 \section{Experimento de Desbalanceamento Micro}
 \label{sec:experimento_desbalanceamento}
@@ -216,7 +271,9 @@ Para observar na prática os efeitos descritos na Seção \ref{subsec:desbalance
 
 O modelo de produção não pode ser usado para esse fim, pois retreiná-lo exigiria os dados reais. Por isso, o experimento utiliza um \textbf{modelo substituto}: um XGBoost treinado sobre as 50.000 CDAs sintéticas do IPTU, com a variável de pagamento sintética como alvo e com as mesmas variáveis e o mesmo pré-processamento do modelo de produção. Para viabilizar dezenas de treinamentos, o substituto usa uma configuração mais leve que a de produção (300 árvores de profundidade máxima 6, taxa de aprendizado 0,05). Sem nenhuma manipulação, ele atinge AUC de 0,78 no conjunto de teste, o que indica sinal suficiente nos dados sintéticos para que efeitos de desbalanceamento sejam distinguíveis do ruído. Os resultados descrevem, portanto, o comportamento de um modelo treinado em dados sintéticos, e não permitem conclusões sobre a equidade do modelo de produção.
 
-O subgrupo escolhido foi o de contribuintes pessoa jurídica (PJ), identificados pela variável \texttt{se\_cnpj}, comparados aos contribuintes pessoa física (PF). Na base sintética do IPTU, as CDAs de PJ são 12,3\% do total e têm taxa de pagamento de 20,6\%, contra 17,8\% das CDAs de PF. A variável \texttt{se\_cnpj} foi mantida entre as entradas do modelo, como ocorre em produção.
+O subgrupo escolhido foi o de contribuintes pessoa jurídica (PJ), identificados pela variável \texttt{se\_cnpj}, comparados aos contribuintes pessoa física (PF). Na base sintética do IPTU, as CDAs de PJ são 12,3\% do total e têm taxa de pagamento de 20,6\%, contra 17,8\% das CDAs de PF.
+
+O experimento foi conduzido em duas versões. Na \textbf{versão direta}, a variável \texttt{se\_cnpj} é uma das entradas do modelo, como ocorre em produção. Nessa versão, se o modelo passar a penalizar PJ, é esperado que a contribuição SHAP dessa variável fique negativa; a versão direta mostra o viés, mas não testa se a explicabilidade o detecta quando ele não é explícito. Na \textbf{versão por \textit{proxy}}, a variável \texttt{se\_cnpj} é retirada do modelo, e o viés só pode se manifestar por variáveis correlacionadas com o tipo de contribuinte. Esse é o caso discutido na Seção \ref{subsec:vies_metricas}. Na base sintética, as demais variáveis do IPTU permitem identificar uma CDA de PJ com AUC de 0,68, principalmente pelo número de imóveis do devedor, de modo que há um canal de \textit{proxy} moderado disponível.
 
 A base foi dividida em treino (70\%) e teste (30\%), de forma estratificada por grupo e por pagamento. O conjunto de teste permaneceu fixo e com as proporções naturais em todos os cenários. No treino, foram aplicadas duas manipulações:
 
@@ -225,11 +282,20 @@ A base foi dividida em treino (70\%) e teste (30\%), de forma estratificada por 
     \item \textbf{Variante 2, sub-representação dos pagadores do grupo:} mantém-se apenas uma fração das CDAs de PJ que foram pagas, preservando todas as não pagas. O grupo passa a parecer, no treino, pior pagador do que de fato é. Essa situação reproduz o que ocorre quando o histórico registra menos pagamentos de um grupo, por exemplo porque ele foi menos cobrado, como no ciclo de retroalimentação descrito no Capítulo \ref{cap:referencial_teorico}.
 \end{itemize}
 
-Cada variante foi testada com frações mantidas de 100\%, 50\%, 25\%, 10\% e 5\%, e cada cenário foi treinado cinco vezes com sementes diferentes. Em cada treinamento foram medidos, no conjunto de teste: a AUC geral e por grupo; a taxa de decisão favorável por grupo, definida como probabilidade estimada igual ou superior a 0,25 (faixas A ou B da Tabela \ref{tab:faixas_rating}), com limiar fixo em todos os cenários; as métricas de viés SPD, EOD e DI, calculadas como PF em relação a PJ; e o valor SHAP médio da variável \texttt{se\_cnpj} nas CDAs de PJ, que mostra quanto o modelo passou a usar o próprio tipo de contribuinte para decidir.
+Cada variante foi testada com frações mantidas de 100\%, 50\%, 25\%, 10\% e 5\%, e cada cenário foi treinado 20 vezes com sementes diferentes, nas duas versões. Em cada treinamento foram medidos, no conjunto de teste:
+
+\begin{itemize}
+    \item a AUC geral e por grupo;
+    \item a taxa de decisão favorável por grupo, definida como probabilidade estimada pelo substituto igual ou superior a 0,25. O limiar corresponde ao limite inferior da faixa B na Tabela \ref{tab:faixas_rating}, mas é aplicado à probabilidade do próprio substituto, que não passa pela normalização da produção, cujos limites valem apenas para os modelos reais. Para verificar que as conclusões não dependem desse corte, as métricas foram recalculadas com os limiares 0,20 e 0,30;
+    \item as métricas de viés, com PF como grupo de referência: $\mathrm{SPD}$ e $\mathrm{EOD}$ são a taxa de PF menos a de PJ, e $\mathrm{DI}$ é a taxa de PJ dividida pela de PF. Assim, $\mathrm{SPD} > 0$, $\mathrm{EOD} > 0$ ou $\mathrm{DI} < 0{,}8$ indicam desvantagem para PJ;
+    \item a contribuição SHAP média de cada variável nas CDAs de PJ. Na versão direta, interessa a contribuição de \texttt{se\_cnpj}; na versão por \textit{proxy}, a variação da contribuição das demais variáveis em relação ao cenário sem manipulação, que indicaria por onde o viés passa.
+\end{itemize}
+
+Para comparar as duas técnicas também nesse experimento, nos cenários com 100\%, 50\% e 5\% dos pagadores PJ, o LIME (na mesma configuração da Seção \ref{sec:procedimentos_xai}) explicou 100 CDAs de PJ do conjunto de teste, registrando a frequência de cada variável no \textit{top}-5. As métricas são apresentadas com a média e o intervalo de confiança de 95\% entre as 20 sementes.
 
 \section{Ferramentas Utilizadas}
 
-O trabalho foi implementado em Python. A síntese de dados utilizou a biblioteca SDV; a manipulação dos dados, as bibliotecas \textit{pandas} e \textit{NumPy}; os modelos de produção foram carregados com \textit{XGBoost} e \textit{joblib}; e as explicações foram geradas com as bibliotecas \textit{shap} e \textit{lime}. As análises foram organizadas em \textit{notebooks} Jupyter, e a estrutura visual de apoio ao auditor foi disponibilizada em uma aplicação web que apresenta, para cada CDA sintética, o \textit{rating}, a probabilidade e a explicação SHAP correspondente.
+O trabalho foi implementado em Python. A síntese de dados utilizou a biblioteca SDV; a manipulação dos dados, as bibliotecas \textit{pandas} e \textit{NumPy}; os modelos de produção foram carregados com \textit{XGBoost} e \textit{joblib}; e as explicações foram geradas com as bibliotecas \textit{shap} e \textit{lime}. Os algoritmos, os parâmetros, as versões das bibliotecas e os programas que reproduzem cada resultado estão nos Apêndices \ref{ap:algoritmos}, \ref{ap:parametros} e \ref{ap:reprodutibilidade}. As análises foram organizadas em \textit{notebooks} Jupyter, e a estrutura visual de apoio ao auditor foi disponibilizada em uma aplicação web que apresenta, para cada CDA sintética, o \textit{rating}, a probabilidade e a explicação SHAP correspondente.
 
 %\section{Cronograma de Execução}
 
